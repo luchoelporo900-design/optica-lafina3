@@ -2,98 +2,310 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Óptica La Fina</title>
-  <link rel="icon" href="optica_lafina.png" />
-  <link rel="stylesheet" href="styles.css?v=11" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Óptica La Fina — Catálogo</title>
+
+  <!-- PWA opcional (si no tenés manifest/sw, podés quitar estas líneas) -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#C59D5F">
+
+  <style>
+    :root{ --gold:#C59D5F; --black:#0F0F0F; --gray:#1a1a1a; --soft:#222; --white:#f5f5f5; }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{background:var(--black);color:var(--white);font-family:"Segoe UI",Roboto,Arial,sans-serif}
+
+    /* Topbar */
+    header.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;
+      background:var(--gray);border-bottom:2px solid var(--gold);box-shadow:0 0 8px rgba(197,157,95,.35);
+      position:sticky;top:0;z-index:50}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#000;border:2px solid var(--gold)}
+    .brand-name{letter-spacing:1px;font-weight:800;color:var(--gold)}
+    .admin{color:var(--gold);font-weight:700;text-decoration:none}
+    .admin:hover{text-decoration:underline}
+    .goldbar{height:3px;background:var(--gold);box-shadow:0 0 6px rgba(197,157,95,.45)}
+
+    /* Layout */
+    main{padding:26px 18px;max-width:1200px;margin:0 auto}
+    h1{margin:0 0 8px;text-align:center;font-size:2rem;color:var(--gold)}
+    p.lead{text-align:center;margin:0 0 18px;color:#ddd}
+
+    /* Buscador + Filtros */
+    .search{display:flex;justify-content:center;margin:10px 0 16px}
+    .search input{width:320px;max-width:92vw;background:var(--soft);color:var(--white);
+      border:1px solid var(--gold);border-radius:8px;padding:10px 12px;outline:none}
+    .filter-buttons{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:22px}
+    .filter{background:transparent;border:1px solid var(--gold);color:var(--gold);
+      padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:700;transition:all .25s ease}
+    .filter:hover,.filter.active{background:var(--gold);color:#111}
+
+    /* Grid & Cards */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
+    .card{background:#181818;border:1px solid var(--gold);border-radius:12px;overflow:hidden;
+      transition:transform .2s ease,box-shadow .3s ease}
+    .card:hover{transform:translateY(-4px);box-shadow:0 0 14px rgba(197,157,95,.5)}
+    .card img{width:100%;height:200px;object-fit:cover;border-bottom:1px solid var(--gold);cursor:pointer}
+    .info{padding:10px}
+    .info h3{margin:0 0 6px;color:var(--gold);font-size:1.1rem}
+    .price{color:var(--gold);font-weight:800;margin:2px 0 6px}
+    .meta{color:#cfcfcf;font-size:.9rem;margin:2px 0}
+    .actions{display:flex;gap:8px;margin-top:8px}
+    .btn{flex:1;background:var(--gold);color:#111;border:none;border-radius:8px;padding:8px 10px;font-weight:800;cursor:pointer}
+    .btn:hover{filter:brightness(1.05)}
+
+    /* Lightbox */
+    #lightbox{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.9);align-items:center;justify-content:center}
+    #lightbox.active{display:flex}
+    #lightbox img{max-width:90vw;max-height:80vh;border:2px solid var(--gold);border-radius:10px}
+    #lightbox .close{position:absolute;top:18px;right:24px;color:var(--gold);font-size:2rem;font-weight:800;cursor:pointer}
+
+    /* Dock inferior */
+    .dock{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;
+      gap:12px;padding:10px 14px;background:rgba(15,15,15,.95);border-top:2px solid var(--gold);
+      box-shadow:0 -6px 14px rgba(197,157,95,.25);z-index:10000}
+    .dock-left{color:#ddd;font-weight:600;display:flex;align-items:center;gap:8px;cursor:pointer}
+    .pill{display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;border:1px solid var(--gold);border-radius:50%;color:var(--gold)}
+    .dock-right{display:flex;gap:8px}
+    .dock-btn{background:var(--gold);color:#111;border:none;border-radius:8px;padding:10px 14px;font-weight:800;cursor:pointer}
+    @media (max-width:520px){ .dock{padding:8px 10px} .dock-left{font-size:.95rem} .dock-btn{padding:8px 12px} }
+
+    /* Panel de favoritos */
+    .drawer{position:fixed;right:0;top:0;bottom:0;width:360px;max-width:92vw;background:#121212;border-left:1px solid var(--gold);
+      box-shadow:-8px 0 18px rgba(0,0,0,.45);z-index:10001;transform:translateX(100%);transition:transform .25s ease}
+    .drawer.open{transform:translateX(0)}
+    .drawer header{display:flex;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid var(--gold);color:var(--gold)}
+    .drawer .body{padding:12px;height:calc(100% - 120px);overflow:auto}
+    .drawer ul{list-style:none;padding:0;margin:0}
+    .drawer li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px;border-bottom:1px dashed #333}
+    .drawer .danger{background:#2a0000;color:#ffb3b3;border:1px solid #992222}
+    .drawer .footer{padding:12px;border-top:1px solid var(--gold);display:flex;gap:8px}
+    .small{font-size:.9rem;color:#bbb}
+    footer{padding:40px 18px 70px;text-align:center;color:#aaa}
+    footer .brandfoot{color:var(--gold);font-weight:800}
+  </style>
 </head>
-<body class="theme-dark">
+<body>
+  <!-- TOP -->
   <header class="topbar">
     <div class="brand">
-      <img src="optica_lafina.png" class="logo" alt="La Fina">
-      <strong>ÓPTICA LA FINA</strong>
+      <img src="/public/optica_lafina.png" alt="Óptica La Fina" class="logo">
+      <div class="brand-name">ÓPTICA LA FINA</div>
     </div>
-    <nav class="tabs">
-      <button data-tab="catalogo" class="active">Catálogo</button>
-      <button data-tab="stock" class="adminOnly hidden">Stock</button>
-      <button data-tab="ventas" class="adminOnly hidden">Ventas</button>
-    </nav>
-    <div class="spacer"></div>
-    <a id="adminLink" class="admin-link">Entrar (Admin)</a>
+    <a class="admin" href="/stock">Subir productos (Admin)</a>
   </header>
+  <div class="goldbar"></div>
 
-  <main class="container">
-    <!-- CATÁLOGO -->
-    <section id="catalogo" class="tab">
-      <h1 class="title">Catálogo de Lentes</h1>
-      <p class="subtitle">Elegí tus modelos favoritos y mandanos tu pedido por WhatsApp.</p>
+  <!-- CONTENIDO -->
+  <main>
+    <h1>Catálogo de Lentes</h1>
+    <p class="lead">Elegí tus modelos favoritos y mandanos tu pedido por WhatsApp.</p>
 
-      <div class="toolbar">
-        <input id="q" class="search" placeholder="Buscar por nombre o código...">
-        <div class="chips" id="chips">
-          <button class="chip active" data-cat="Todos">Todos</button>
-          <button class="chip" data-cat="Hombre">Hombre</button>
-          <button class="chip" data-cat="Mujer">Mujer</button>
-          <button class="chip" data-cat="Niños">Niños</button>
-          <button class="chip" data-cat="Sol">Sol</button>
-          <button class="chip" data-cat="Recetado">Recetado</button>
-          <button class="chip" data-cat="Metal">Metal</button>
-          <button class="chip" data-cat="Acetato">Acetato</button>
-          <button class="chip" data-cat="Titanio">Titanio</button>
-        </div>
-      </div>
+    <!-- Buscador -->
+    <div class="search">
+      <input id="q" type="text" placeholder="Buscar por nombre o código..." autocomplete="off">
+    </div>
 
-      <div id="grid" class="grid"></div>
+    <!-- Filtros -->
+    <div class="filter-buttons" id="chips">
+      <button class="filter active" data-filter="todos">Todos</button>
+      <button class="filter" data-filter="hombre">Hombre</button>
+      <button class="filter" data-filter="mujer">Mujer</button>
+      <button class="filter" data-filter="niños">Niños</button>
+      <button class="filter" data-filter="sol">Sol</button>
+      <button class="filter" data-filter="recetado">Recetado</button>
+      <button class="filter" data-filter="metal">Metal</button>
+      <button class="filter" data-filter="acetato">Acetato</button>
+      <button class="filter" data-filter="titanio">Titanio</button>
+    </div>
 
-      <div class="favbar">
-        <span>❤ <span id="favCount">0</span> item(s) en favoritos</span>
-        <button id="waFavs" class="btn btn-gold">Enviar por WhatsApp</button>
-      </div>
-    </section>
-
-    <!-- STOCK (solo admin) -->
-    <section id="stock" class="tab hidden">
-      <div class="card" style="padding:16px">
-        <h2 style="margin-top:0">Stock</h2>
-        <table id="stockTable" class="table">
-          <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Acciones</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <hr/>
-        <h3>Agregar producto</h3>
-        <input id="pName" placeholder="Nombre" />
-        <input id="pStock" type="number" placeholder="Stock" />
-        <input id="pPrice" type="number" placeholder="Precio" />
-        <button id="addBtn" class="btn btn-gold">Agregar</button>
-      </div>
-    </section>
-
-    <!-- VENTAS (solo admin) -->
-    <section id="ventas" class="tab hidden">
-      <div class="card" style="padding:16px">
-        <h2 style="margin-top:0">Ventas</h2>
-        <table id="salesTable" class="table">
-          <thead><tr><th>Fecha</th><th>Detalle</th><th>Total</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
+    <!-- Grilla -->
+    <section class="grid" id="grid"></section>
   </main>
 
-  <!-- Modal Admin -->
-  <div id="loginModal" class="modal hidden">
-    <div class="modal-card">
-      <h3>Acceso administrador</h3>
-      <input type="password" id="adminPass" placeholder="Contraseña admin">
-      <div class="row">
-        <button id="adminEnter" class="btn btn-gold">Entrar</button>
-        <button id="adminCancel" class="btn">Cancelar</button>
-      </div>
-      <p class="hint">Clave por defecto: <code>lafina123325</code></p>
+  <!-- Lightbox -->
+  <div id="lightbox" aria-hidden="true">
+    <span class="close" onclick="closeLB()">×</span>
+    <img id="lb-img" alt="">
+  </div>
+
+  <!-- Drawer Favoritos -->
+  <aside class="drawer" id="drawer">
+    <header>
+      <strong>Mis favoritos</strong>
+      <button id="closeDrawer" class="btn danger">Cerrar</button>
+    </header>
+    <div class="body">
+      <ul id="favList"><li class="small">(Vacío)</li></ul>
+    </div>
+    <div class="footer">
+      <button id="clearFav" class="btn danger">Vaciar</button>
+      <button id="sendWA" class="btn" style="flex:1">Enviar por WhatsApp</button>
+    </div>
+  </aside>
+
+  <!-- Dock -->
+  <div class="dock" id="dock">
+    <div class="dock-left" id="openDrawer">
+      <span class="pill">❤️</span>
+      <span><b id="fav-count">0</b> ítem(s) en favoritos</span>
+    </div>
+    <div class="dock-right">
+      <button id="dock-send" class="dock-btn">Enviar por WhatsApp</button>
     </div>
   </div>
 
-  <footer class="footer">© Óptica La Fina</footer>
-  <script src="app.js?v=11"></script>
+  <footer>
+    <span class="brandfoot">Óptica La Fina — Santaní PY</span>
+  </footer>
+
+  <!-- ====== SCRIPTS ====== -->
+  <script>
+    // ====== Config ======
+    const WHATSAPP = "595987459717"; // <-- poné aquí tu número sin +
+    const FALLBACK_IMG = "https://images.unsplash.com/photo-1523289333742-be1143f6b766?q=80&w=1200&auto=format&fit=crop";
+    const FKEY = "lafina_favs";
+
+    // ====== Util ======
+    const $ = q => document.querySelector(q);
+    const $$ = q => Array.from(document.querySelectorAll(q));
+    const fmt = n => Number(n||0).toLocaleString("es-PY");
+
+    // ====== Render de tarjetas desde /api/products ======
+    let PRODUCTS = [];
+    let favs = [];
+    try { favs = JSON.parse(localStorage.getItem(FKEY) || "[]"); } catch(e){ favs = []; }
+
+    async function loadProducts(){
+      const r = await fetch("/api/products");
+      const data = await r.json();
+      PRODUCTS = (data.products || []).map(p => ({
+        id: p.id,
+        title: p.name,
+        price: p.price,
+        category: (p.category || "recetado"),
+        code: p.code || p.id,
+        image: p.image || FALLBACK_IMG
+      }));
+      renderGrid();
+      applyFilters();
+    }
+
+    function renderGrid(){
+      const grid = $("#grid");
+      grid.innerHTML = "";
+      const setFav = new Set(favs.map(f=>f.code));
+      PRODUCTS.forEach(it=>{
+        const el = document.createElement("article");
+        el.className = "card";
+        el.dataset.cat = (it.category||"").toLowerCase();
+        el.dataset.title = (it.title||"").toLowerCase();
+        el.dataset.code = (it.code||"").toLowerCase();
+        el.innerHTML = `
+          <img src="${it.image}" alt="${it.title}">
+          <div class="info">
+            <h3>${it.title}</h3>
+            ${it.price ? `<div class="price">Gs ${fmt(it.price)}</div>` : ""}
+            <div class="meta">Código: ${it.code}</div>
+            <div class="meta">Categoría: ${(it.category||"").charAt(0).toUpperCase() + (it.category||"").slice(1)}</div>
+            <div class="actions">
+              <button class="btn add" data-id="${it.id}">${setFav.has(it.code) ? "❤️ Guardado" : "Agregar a favoritos"}</button>
+            </div>
+          </div>`;
+        grid.appendChild(el);
+      });
+
+      // Lightbox
+      $$("#grid .card img").forEach(img=>{
+        img.onclick = ()=> { $("#lb-img").src = img.src; $("#lightbox").classList.add("active"); };
+      });
+
+      // Add/Quitar favoritos
+      $$("#grid .btn.add").forEach(btn=>{
+        btn.onclick = ()=>{
+          const p = PRODUCTS.find(x=>x.id===btn.dataset.id);
+          const item = { code:p.code, title:p.title, price:p.price||0, cat:p.category||"" };
+          const i = favs.findIndex(f=>f.code===item.code);
+          if(i>=0){ favs.splice(i,1); btn.textContent="Agregar a favoritos"; }
+          else { favs.push(item); btn.textContent="❤️ Guardado"; }
+          persistFavs(); renderFavsCount();
+        };
+      });
+
+      renderFavsCount();
+    }
+
+    function closeLB(){ $("#lightbox").classList.remove("active"); $("#lb-img").src=""; }
+    window.closeLB = closeLB;
+    $("#lightbox").onclick = (e)=>{ if(e.target.id==="lightbox") closeLB(); };
+    document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeLB(); });
+
+    // ====== Buscador + Filtros ======
+    $("#chips").onclick = (e)=>{
+      const b = e.target.closest(".filter"); if(!b) return;
+      $(".filter.active")?.classList.remove("active"); b.classList.add("active");
+      applyFilters();
+    };
+    $("#q").oninput = applyFilters;
+
+    function applyFilters(){
+      const cat = $(".filter.active").dataset.filter.toLowerCase();
+      const s = ($("#q").value||"").trim().toLowerCase();
+      $$("#grid .card").forEach(c=>{
+        const okCat = (cat==="todos") || (c.dataset.cat===cat);
+        const okText = !s || c.dataset.title.includes(s) || c.dataset.code.includes(s);
+        c.style.display = (okCat && okText) ? "" : "none";
+      });
+    }
+
+    // ====== Favoritos + Drawer + WhatsApp ======
+    const $favCount = $("#fav-count"), $favList = $("#favList");
+    const persistFavs = ()=> localStorage.setItem(FKEY, JSON.stringify(favs));
+    const renderFavsCount = ()=> $favCount.textContent = favs.length;
+
+    $("#openDrawer").onclick = ()=> { renderFavsList(); $("#drawer").classList.add("open"); };
+    $("#closeDrawer").onclick = ()=> $("#drawer").classList.remove("open");
+    $("#clearFav").onclick = ()=> { favs=[]; persistFavs(); renderFavsList(); renderFavsCount(); $$("#grid .btn.add").forEach(b=>b.textContent="Agregar a favoritos"); };
+    $("#dock-send").onclick = sendWAAll; $("#sendWA").onclick = sendWAAll;
+
+    function renderFavsList(){
+      $favList.innerHTML = favs.length ? "" : '<li class="small">(Vacío)</li>';
+      favs.forEach(f=>{
+        const li = document.createElement("li");
+        const precio = f.price ? `Gs ${fmt(f.price)}` : "";
+        li.innerHTML = `<span>${f.title} — Código ${f.code} ${precio} — ${f.cat}</span>
+                        <button class="btn danger" data-code="${f.code}">Quitar</button>`;
+        $favList.appendChild(li);
+      });
+      $favList.querySelectorAll("button[data-code]").forEach(b=>{
+        b.onclick = ()=>{
+          favs = favs.filter(x=>x.code!==b.dataset.code);
+          persistFavs(); renderFavsList(); renderFavsCount();
+          // actualizar botones en grilla
+          $$("#grid .btn.add").forEach(btn=>{
+            const p = PRODUCTS.find(x=>x.id===btn.dataset.id);
+            if(p && p.code===b.dataset.code) btn.textContent="Agregar a favoritos";
+          });
+        };
+      });
+    }
+    function sendWAAll(){
+      if(!favs.length){ alert("No tenés favoritos seleccionados."); return; }
+      const lines = favs.map((f,i)=>{
+        const precio = f.price ? `Gs ${fmt(f.price)}` : "";
+        return `${i+1}) ${f.title} (Código: ${f.code}) ${precio} — ${f.cat}`;
+      });
+      const msg = ['👓 *Óptica La Fina*','Quiero este pedido:','',...lines].join('\n');
+      const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`;
+      window.open(url, "_blank");
+    }
+
+    // Init
+    (async function init(){
+      if("serviceWorker" in navigator){
+        try{ navigator.serviceWorker.register("/sw.js"); }catch(e){}
+      }
+      await loadProducts();
+    })();
+  </script>
 </body>
 </html>
