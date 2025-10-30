@@ -68,13 +68,46 @@
   </div>
 </div>
 
-<script>
-  const $ = s => document.querySelector(s);
-  const showAdmin = (ok)=>{
-    $("#adminArea").style.display = ok ? "block" : "none";
-    $("#loginBox").style.display = ok ? "none" : "block";
-    $("#btnLogout").style.display = ok ? "inline-block" : "none";
+<<script>
+  // … (resto del script)
+
+  const badge = document.createElement("span");
+  badge.id = "uploadBadge";
+  badge.style.cssText = "display:none;margin-left:8px;color:#10e38b;font-weight:700";
+  document.getElementById("pickFile").after(badge);
+
+  // Subir imagen a /api/upload
+  $("#pickFile").onclick = ()=> $("#pFile").click();
+  $("#pFile").onchange = async (e)=>{
+    const file = e.target.files?.[0];
+    if(!file) return;
+    const fd = new FormData();
+    fd.append("image", file);
+
+    // feedback
+    badge.style.display = "inline-block";
+    badge.style.color = "#f5c678";
+    badge.textContent = "Subiendo…";
+
+    try{
+      const up = await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
+      const data = await up.json();
+      if(!data.ok) throw new Error(data.error||"No se pudo subir");
+      $("#pImage").value = data.url;
+      $("#preview").src = data.url;
+      $("#preview").style.display = "inline-block";
+      badge.style.color = "#10e38b";
+      badge.textContent = "¡Imagen subida!";
+    }catch(err){
+      badge.style.color = "#ff8b8b";
+      badge.textContent = "Error al subir";
+      alert(err.message);
+    }
   };
+
+  // … (resto del script)
+</script>
+
 
   // Al cargar, preguntar si ya hay sesión
   window.addEventListener("DOMContentLoaded", async ()=>{
