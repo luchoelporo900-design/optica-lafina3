@@ -10,12 +10,30 @@ function setRole(r){
 async function fetchJSON(url, opts={}){ const r = await fetch(url, opts); return r.json(); }
 
 async function requireLogin(){
-  // Intento de login contra backend
   const pass = $("#adminPass").value.trim();
   try{
     const res = await fetch("/api/auth/admin", {
-      method:"POST", headers:{ "Content-Type":"application/json" },
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ password: pass })
+    });
+    if(res.ok){
+      setRole("admin");
+      $("#loginModal").classList.add("hidden");
+      await loadProducts();
+      return;
+    }
+  }catch(e){}
+  // Fallback local (por si algo pasa con el endpoint)
+  if(pass === "lafina123325"){
+    setRole("admin");
+    $("#loginModal").classList.add("hidden");
+    await loadProducts();
+  }else{
+    alert("Contraseña incorrecta");
+  }
+}
+
     });
     if(res.ok){ setRole("admin"); $("#loginModal").classList.add("hidden"); await loadProducts(); return; }
   }catch(e){}
@@ -123,3 +141,22 @@ async function requireLogin(){
     alert("Contraseña incorrecta");
   }
 }
+$("#pickFile").onclick = ()=> $("#pFile").click();
+
+$("#pFile").onchange = async (e)=>{
+  const file = e.target.files?.[0];
+  if(!file) return;
+  // subir al servidor
+  const fd = new FormData();
+  fd.append("image", file);
+  const up = await fetch("/api/upload", {
+    method: "POST",
+    headers: { "x-role": ROLE }, // necesitamos ser admin
+    body: fd
+  });
+  const data = await up.json();
+  if(!data.ok){ alert(data.error || "No se pudo subir"); return; }
+  // poner la URL subida en el campo pImage
+  $("#pImage").value = data.url; // ej: /uploads/1698680000_tufoto.jpg
+  alert("Imagen subida ✔");
+};
