@@ -1,49 +1,99 @@
 // public/app.js
-document.addEventListener("DOMContentLoaded", () => {
-  cargarCatalogo();
+
+const ORDERED_CATS = ["Todos","Hombre","Mujer","Niños","Sol","Recetado","Metal","Acetato","Titanio"];
+
+let PRODUCTS = [];
+let state = { q: "", cat: "Todos" };
+
+const $ = s => document.querySelector(s);
+const grid = $("#grid");
+const statusEl = $("#status");
+const chipsEl = $("#chips");
+const qEl = $("#q");
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadProducts();
+  buildChips();
+  bindEvents();
+  render();
 });
 
-async function cargarCatalogo() {
-  const cont = document.querySelector("#catalogo");
-  if (!cont) return;
+async function loadProducts(){
+  statusEl.textContent = "Cargando productos…";
+  grid.style.display = "none";
+  try{
+    const r = await fetch("/api/products");
+    const data = await r.json();
+    if(!data.ok) throw new Error(data.error||"No se pudo cargar");
+    PRODUCTS = Array.isArray(data.items)? data.items : [];
+  }catch(e){
+    statusEl.textContent = "Error: " + e.message;
+    return;
+  }
+  if(PRODUCTS.length === 0){
+    statusEl.innerHTML = "Aún no hay productos. <a href='stock.html' class='admin'>Agregar ahora</a>";
+    return;
+  }
+  statusEl.textContent = "";
+  grid.style.display = "grid";
+}
 
-  cont.innerHTML = `<p>Cargando productos...</p>`;
-  try {
-    const res = await fetch("/api/products");
-    const data = await res.json();
+function buildChips(){
+  const present = new Set(PRODUCTS.map(p => (p.category||"").trim()));
+  const cats = ["Todos", ...ORDERED_CATS.filter(c=>c!=="Todos" && present.has(c))];
+  chipsEl.innerHTML = cats.map(c => `
+    <button class="chip ${c===state.cat?"active":""}" data-cat="${c}">${c}</button>
+  `).join("");
+}
 
-    if (!data.ok) throw new Error(data.error || "No se pudo cargar.");
+function bindEvents(){
+  chipsEl.addEventListener("click", (e)=>{
+    const b = e.target.closest(".chip");
+    if(!b) return;
+    state.cat = b.dataset.cat;
+    [...chipsEl.querySelectorAll(".chip")].forEach(x=>x.classList.toggle("active", x===b));
+    render();
+  });
+  qEl.addEventListener("input", ()=>{
+    state.q = qEl.value.toLowerCase();
+    render();
+  });
+}
 
-    const items = Array.isArray(data.items) ? data.items : [];
+function render(){
+  const term = state.q;
+  const cat = state.cat;
 
-    if (items.length === 0) {
-      cont.innerHTML = `<p style="opacity:.8">Sin productos por ahora.</p>`;
-      return;
-    }
+  const list = PRODUCTS.filter(p=>{
+    const byCat = (cat==="Todos") || ((p.category||"").trim()===cat);
+    const txt = `${p.name||""} ${p.code||""}`.toLowerCase();
+    const byQ = term==="" || txt.includes(term);
+    return byCat && byQ;
+  });
 
-    // Render básico
-    const cards = items.map(it => {
-      const img = it.image ? `<img src="${it.image}" alt="${it.name}" style="width:100%;height:180px;object-fit:cover;border-radius:10px 10px 0 0;">` : "";
-      const price = (it.price ?? 0).toLocaleString("es-PY");
-      return `
-        <div style="background:#121212;border:1px solid #2a2a2a;border-radius:12px;overflow:hidden;box-shadow:0 0 12px rgba(0,0,0,.25);">
-          ${img}
-          <div style="padding:12px;text-align:left;">
-            <div style="font-weight:700;margin-bottom:4px">${it.name || "Producto"}</div>
-            <div style="opacity:.9">Gs ${price}</div>
-            ${it.code ? `<div style="opacity:.6;font-size:.9em">Código: ${it.code}</div>` : ""}
-            ${it.category ? `<div style="opacity:.6;font-size:.9em">Categoría: ${it.category}</div>` : ""}
-          </div>
+  if(list.length===0){
+    grid.innerHTML = "";
+    statusEl.textContent = "Sin resultados.";
+    grid.style.display = "none";
+    return;
+  }
+
+  statusEl.textContent = "";
+  grid.style.display = "grid";
+
+  grid.innerHTML = list.map(p=>{
+    const price = Number(p.price||0).toLocaleString("es-PY");
+    const img = p.image ? `<img src="${p.image}" alt="${p.name}">` : `<div style="height:180px;display:grid;place-items:center;background:#0d0d0d" class="muted">Sin imagen</div>`;
+    return `
+      <div class="card">
+        ${img}
+        <div class="box">
+          <div style="font-weight:700">${p.name||"Producto"}</div>
+          <div>Gs ${price}</div>
+          ${p.code? `<div class="muted" style="font-size:.9em">Código: ${p.code}</div>`:""}
+          ${p.category? `<div class="muted" style="font-size:.9em">Categoría: ${p.category}</div>`:""}
         </div>
-      `;
-    }).join("");
-
-    cont.innerHTML = `
-      <div style="display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));padding:16px;max-width:1100px;margin:0 auto;">
-        ${cards}
       </div>
     `;
-  } catch (e) {
-    cont.innerHTML = `<p style="color:#ff9a9a">Error: ${e.message}</p>`;
-  }
+  }).join("");
 }
