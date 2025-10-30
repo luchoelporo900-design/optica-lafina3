@@ -1,3 +1,4 @@
+console.log("App La Fina v3");
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => Array.from(document.querySelectorAll(q));
 
