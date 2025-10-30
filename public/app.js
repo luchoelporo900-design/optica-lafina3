@@ -5,7 +5,7 @@ let ROLE = "guest";
 let PRODUCTS = [];
 let CART = []; // {id, name, price, qty}
 
-const WHATSAPP_PHONE = "5959XXXXXXXX"; // ← PONÉ AQUÍ TU NÚMERO (sin +). Ej: 595981234567
+const WHATSAPP_PHONE = "595987499717"; // ← PONÉ AQUÍ TU NÚMERO (sin +). Ej: 595981234567
 
 function format(n){ return Number(n||0).toLocaleString(); }
 
