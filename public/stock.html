@@ -5,11 +5,21 @@
   <input id="pPrice" type="number" placeholder="Precio" />
   <input id="pCode" placeholder="Código (opcional)" />
   <select id="pCategory">
-    <option>Recetado</option><option>Sol</option><option>Hombre</option><option>Mujer</option>
-    <option>Niños</option><option>Metal</option><option>Acetato</option><option>Titanio</option>
+    <option>Recetado</option><option>Sol</option><option>Hombre</option>
+    <option>Mujer</option><option>Niños</option><option>Metal</option>
+    <option>Acetato</option><option>Titanio</option>
   </select>
+
+  <!-- URL de imagen (se completa sola después del upload) -->
   <input id="pImage" placeholder="URL de imagen (opcional)" style="min-width:260px" />
+
+  <!-- Archivo desde galería -->
   <input id="pFile" type="file" accept="image/*" style="display:none" />
-  <button id="pickFile" class="gold">Subir imagen</button>
-  <button id="addBtn" class="gold">Agregar</button>
+  <button id="pickFile">Subir imagen</button>
+  <img id="preview" alt="" style="display:none; width:80px; height:80px; object-fit:cover; border:1px solid #ccc; border-radius:8px;">
+
+  <button id="addBtn">Agregar</button>
 </div>
+
+<!-- al final del body debe estar esta línea -->
+<script src="stock.js?v=2"></script>
