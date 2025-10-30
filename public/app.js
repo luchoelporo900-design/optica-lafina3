@@ -1,186 +1,178 @@
-
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => Array.from(document.querySelectorAll(q));
 
-let ROLE = null;
+let ROLE = "guest";
 let PRODUCTS = [];
-let CART = [];
+let CART = []; // {id, name, price, qty}
 
-function setRole(role) {
+const WHATSAPP_PHONE = "5959XXXXXXXX"; // ← PONÉ AQUÍ TU NÚMERO (sin +). Ej: 595981234567
+
+function format(n){ return Number(n||0).toLocaleString(); }
+
+function setRole(role){
   ROLE = role;
-  $("#roleBadge").textContent = role ? role.toUpperCase() : "";
-  if (role) {
-    $("#authView").classList.add("hidden");
-    $("#dashboard").classList.remove("hidden");
-    $$(".adminOnly").forEach(el => el.style.display = (ROLE === "admin" ? "" : "none"));
-  }
+  $("#roleBadge").textContent = role.toUpperCase();
+  const adminEls = $$(".adminOnly");
+  adminEls.forEach(el => el.classList.toggle("hidden", role!=="admin"));
 }
 
-async function loginGuest() {
-  const res = await fetch("/api/auth/guest", { method: "POST" });
-  const data = await res.json();
-  if (data.ok) setRole("guest");
+async function fetchJSON(url, opts={}){
+  const res = await fetch(url, opts);
+  return res.json();
 }
 
-async function loginAdmin() {
-  const password = $("#adminPass").value;
-  const res = await fetch("/api/auth/admin", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password }),
-  });
-  if (res.ok) {
-    const data = await res.json();
-    if (data.ok) setRole("admin");
-  } else {
-    alert("Contraseña incorrecta");
-  }
-}
-
-function setActiveTab(tabId) {
-  $$(".tab").forEach(t => t.classList.add("hidden"));
-  $$(".tabs button").forEach(b => b.classList.remove("active"));
-  $(`#${tabId}`).classList.remove("hidden");
-  $(`.tabs button[data-tab="${tabId}"]`).classList.add("active");
-}
-
-async function loadProducts() {
-  const res = await fetch("/api/products");
-  const data = await res.json();
+async function loadProducts(){
+  const data = await fetchJSON("/api/products");
   PRODUCTS = data.products || [];
-  renderProducts();
-  buildSaleForm();
+  renderCatalog();
+  renderStockTable();
 }
 
-function renderProducts() {
+function renderCatalog(){
+  const grid = $("#cardGrid");
+  grid.innerHTML = "";
+  PRODUCTS.forEach(p=>{
+    const card = document.createElement("div");
+    card.className = "card product-card";
+    card.innerHTML = `
+      <div class="prod-title">${p.name}</div>
+      <div class="prod-price">Gs. ${format(p.price)}</div>
+      <div class="prod-stock">Disp: ${p.stock}</div>
+      <div class="row">
+        <button data-id="${p.id}" class="add">Añadir</button>
+        <button data-id="${p.id}" class="sub secondary">-</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  grid.onclick = (e)=>{
+    const id = e.target.dataset.id;
+    if(!id) return;
+    const p = PRODUCTS.find(x=>x.id===id);
+    if(!p) return;
+    if(e.target.classList.contains("add")) addToCart(p);
+    if(e.target.classList.contains("sub")) addToCart(p, -1);
+  };
+
+  renderCart();
+}
+
+function addToCart(p, delta=1){
+  let line = CART.find(x=>x.id===p.id);
+  if(!line){ line = { id:p.id, name:p.name, price:p.price, qty:0 }; CART.push(line); }
+  line.qty = Math.max(0, line.qty + delta);
+  if(line.qty===0) CART = CART.filter(x=>x.id!==p.id);
+  renderCart();
+}
+
+function renderCart(){
+  const list = $("#cartList");
+  list.innerHTML = "";
+  let total = 0;
+  CART.forEach(i=>{
+    total += i.qty * i.price;
+    const row = document.createElement("div");
+    row.className = "cart-row";
+    row.innerHTML = `
+      <span>${i.qty}× ${i.name}</span>
+      <strong>Gs. ${format(i.qty*i.price)}</strong>
+    `;
+    list.appendChild(row);
+  });
+  $("#cartTotal").textContent = `Gs. ${format(total)}`;
+}
+
+function renderStockTable(){
   const tbody = $("#stockTable tbody");
+  if(!tbody) return;
   tbody.innerHTML = "";
-  PRODUCTS.forEach(p => {
+  PRODUCTS.forEach(p=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${p.name}</td>
       <td>${p.stock}</td>
-      <td>${p.price.toLocaleString()}</td>
-      <td class="adminOnly">
-        <div class="actions">
-          <button class="secondary" data-act="edit" data-id="${p.id}">Editar</button>
-          <button class="secondary" data-act="del" data-id="${p.id}">Borrar</button>
-        </div>
-      </td>
-    `;
+      <td>${format(p.price)}</td>
+      <td>
+        <button class="secondary" data-act="edit" data-id="${p.id}">Editar</button>
+        <button class="secondary" data-act="del" data-id="${p.id}">Borrar</button>
+      </td>`;
     tbody.appendChild(tr);
   });
-  $$(".adminOnly").forEach(el => el.style.display = (ROLE === "admin" ? "" : "none"));
-  tbody.addEventListener("click", async (e) => {
+
+  tbody.onclick = async (e)=>{
     const btn = e.target.closest("button");
-    if (!btn) return;
+    if(!btn) return;
     const id = btn.dataset.id;
-    const act = btn.dataset.act;
-    if (act === "del") {
-      if (!confirm("¿Borrar producto?")) return;
-      await fetch(`/api/products/${id}`, { method: "DELETE", headers: { "x-role": ROLE } });
+    if(btn.dataset.act==="del"){
+      if(!confirm("¿Borrar producto?")) return;
+      await fetch(`/api/products/${id}`, { method:"DELETE", headers:{ "x-role": ROLE }});
       await loadProducts();
-    } else if (act === "edit") {
-      const p = PRODUCTS.find(x => x.id === id);
-      const name = prompt("Nombre:", p.name);
-      if (name === null) return;
-      const stock = prompt("Stock:", p.stock);
-      if (stock === null) return;
-      const price = prompt("Precio:", p.price);
-      if (price === null) return;
+    }else{
+      const p = PRODUCTS.find(x=>x.id===id);
+      const name = prompt("Nombre:", p.name); if(name===null) return;
+      const stock = prompt("Stock:", p.stock); if(stock===null) return;
+      const price = prompt("Precio:", p.price); if(price===null) return;
       await fetch(`/api/products/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "x-role": ROLE },
-        body: JSON.stringify({ name, stock: Number(stock), price: Number(price) })
+        method:"PUT",
+        headers:{ "Content-Type":"application/json", "x-role": ROLE },
+        body: JSON.stringify({ name, stock:Number(stock), price:Number(price) })
       });
       await loadProducts();
     }
-  }, { once: true });
+  };
 }
 
-function buildSaleForm() {
-  const wrap = $("#ventaForm");
-  wrap.innerHTML = "";
-  CART = [];
-  PRODUCTS.forEach(p => {
-    const row = document.createElement("div");
-    row.style.marginBottom = "8px";
-    row.innerHTML = `
-      <label>${p.name} (${p.stock} disp.)</label>
-      <input type="number" min="0" value="0" data-id="${p.id}" style="width:100px;margin-left:8px;">
-    `;
-    wrap.appendChild(row);
-  });
+function setActiveTab(id){
+  $$(".tab").forEach(t=>t.classList.add("hidden"));
+  $$(".tabs button").forEach(b=>b.classList.remove("active"));
+  $(`#${id}`).classList.remove("hidden");
+  $(`.tabs button[data-tab="${id}"]`).classList.add("active");
 }
 
-async function confirmSale() {
-  const qtyInputs = $$("#ventaForm input[type='number']");
-  const items = [];
-  qtyInputs.forEach(inp => {
-    const qty = Number(inp.value);
-    if (qty > 0) items.push({ productId: inp.dataset.id, qty });
-  });
-  if (items.length === 0) return alert("Seleccioná al menos 1 producto");
-  const res = await fetch("/api/sales", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items })
-  });
-  const data = await res.json();
-  if (!data.ok) {
-    alert(data.error || "Error al guardar venta");
-  } else {
-    alert("Venta registrada ✔");
-    await loadProducts();
-    await loadSales();
-    setActiveTab("ventas");
-  }
+function buildWhatsAppLink(){
+  if(!CART.length){ alert("Agregá productos al carrito"); return; }
+  const lines = CART.map(i=>`${i.qty}× ${i.name} - Gs. ${format(i.qty*i.price)}`);
+  const total = CART.reduce((s,i)=>s+i.qty*i.price,0);
+  const msg = `Hola! Quiero pedir:%0A${lines.join("%0A")}%0A%0ATotal: Gs. ${format(total)}`;
+  return `https://wa.me/${WHATSAPP_PHONE}?text=${msg}`;
 }
 
-async function loadSales() {
-  const res = await fetch("/api/sales");
-  const data = await res.json();
-  const sales = data.sales || [];
-  const tbody = $("#salesTable tbody");
-  tbody.innerHTML = "";
-  sales.slice().reverse().forEach(s => {
-    const detail = s.items.map(i => `${i.qty}× ${i.name}`).join(", ");
-    const tr = document.createElement("tr");
-    const date = new Date(s.date);
-    tr.innerHTML = `
-      <td>${date.toLocaleString()}</td>
-      <td>${detail}</td>
-      <td>${(s.total||0).toLocaleString()}</td>
-    `;
-    tbody.appendChild(tr);
+function bindUI(){
+  // Tabs
+  $$(".tabs button").forEach(btn=>{
+    btn.onclick = ()=> setActiveTab(btn.dataset.tab);
   });
-}
 
-function bindUI() {
-  $("#guestBtn").addEventListener("click", loginGuest);
-  $("#adminBtn").addEventListener("click", loginAdmin);
-  $$(".tabs button").forEach(btn => {
-    btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
-  });
-  $("#addBtn").addEventListener("click", async () => {
-    const name = $("#pName").value.trim();
-    const stock = Number($("#pStock").value || 0);
-    const price = Number($("#pPrice").value || 0);
-    if (!name) return alert("Nombre requerido");
-    await fetch("/api/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-role": ROLE },
-      body: JSON.stringify({ name, stock, price })
+  // WhatsApp
+  $("#waBtn").onclick = ()=>{
+    const url = buildWhatsAppLink();
+    if(url) window.open(url, "_blank");
+  };
+
+  // Login modal
+  $("#loginBtn").onclick = ()=> $("#loginModal").classList.remove("hidden");
+  $("#closeModal").onclick = ()=> $("#loginModal").classList.add("hidden");
+  $("#adminEnter").onclick = async ()=>{
+    const password = $("#adminPass").value;
+    const res = await fetch("/api/auth/admin", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ password })
     });
-    $("#pName").value = ""; $("#pStock").value = ""; $("#pPrice").value = "";
-    await loadProducts();
-  });
-  $("#confirmSale").addEventListener("click", confirmSale);
+    if(res.ok){
+      setRole("admin");
+      $("#loginModal").classList.add("hidden");
+      setActiveTab("stock");
+    }else{
+      alert("Contraseña incorrecta");
+    }
+  };
 }
 
-window.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener("DOMContentLoaded", async ()=>{
   bindUI();
-  setActiveTab("stock");
+  setRole("guest");
+  setActiveTab("catalogo");
   await loadProducts();
-  await loadSales();
 });
