@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="es">
 <head>
@@ -10,66 +9,80 @@
 </head>
 <body>
   <header class="topbar">
-    <img src="optica_lafina.png" alt="Óptica La Fina" class="logo">
-    <h1>Óptica La Fina</h1>
-    <div id="roleBadge" class="role"></div>
+    <div class="brand">
+      <img src="optica_lafina.png" alt="Óptica La Fina" class="logo">
+      <h1>Óptica La Fina</h1>
+    </div>
+    <nav class="tabs">
+      <button data-tab="catalogo" class="active">Catálogo</button>
+      <button data-tab="stock" class="adminOnly hidden">Stock</button>
+      <button data-tab="ventas" class="adminOnly hidden">Ventas</button>
+    </nav>
+    <div class="right">
+      <span id="roleBadge" class="role"></span>
+      <button id="loginBtn" class="ghost">Admin</button>
+    </div>
   </header>
 
   <main id="app">
-    <section id="authView" class="card">
-      <h2>Ingresar</h2>
-      <p><strong>Usuario</strong> (sin contraseña)</p>
-      <button id="guestBtn">Entrar como Usuario</button>
-      <hr>
-      <p><strong>Administrador</strong></p>
-      <input type="password" id="adminPass" placeholder="Contraseña admin" />
-      <button id="adminBtn">Entrar como Admin</button>
-      <p class="hint">Admin por defecto: <code>lafina123325</code></p>
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal hidden">
+      <div class="card modal-card">
+        <h3>Acceso administrador</h3>
+        <input type="password" id="adminPass" placeholder="Contraseña admin" />
+        <div class="row">
+          <button id="adminEnter">Entrar</button>
+          <button id="closeModal" class="secondary">Cancelar</button>
+        </div>
+        <p class="hint">Clave por defecto: <code>lafina123325</code></p>
+      </div>
+    </div>
+
+    <!-- CATÁLOGO -->
+    <section id="catalogo" class="tab">
+      <div class="catalogo-grid" id="cardGrid"></div>
+
+      <aside class="carrito">
+        <h3>Carrito</h3>
+        <div id="cartList" class="cart-list"></div>
+        <div class="cart-footer">
+          <div>Total: <strong id="cartTotal">0</strong></div>
+          <button id="waBtn">Pedir por WhatsApp</button>
+        </div>
+        <small class="hint">Ajustá cantidades y enviamos tu pedido por WhatsApp.</small>
+      </aside>
     </section>
 
-    <section id="dashboard" class="hidden">
-      <nav class="tabs">
-        <button data-tab="stock">Stock</button>
-        <button data-tab="ventas">Ventas</button>
-        <button data-tab="nueva-venta">Nueva venta</button>
-      </nav>
-
-      <div id="stock" class="tab">
+    <!-- STOCK -->
+    <section id="stock" class="tab hidden">
+      <div class="card">
         <h2>Stock</h2>
         <table id="stockTable">
-          <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th class="adminOnly">Acciones</th></tr></thead>
+          <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Acciones</th></tr></thead>
           <tbody></tbody>
         </table>
-
-        <div id="addProduct" class="card adminOnly">
-          <h3>Agregar producto</h3>
-          <input id="pName" placeholder="Nombre" />
-          <input id="pStock" type="number" placeholder="Stock" />
-          <input id="pPrice" type="number" placeholder="Precio" />
-          <button id="addBtn">Agregar</button>
-        </div>
+        <hr/>
+        <h3>Agregar producto</h3>
+        <input id="pName" placeholder="Nombre" />
+        <input id="pStock" type="number" placeholder="Stock" />
+        <input id="pPrice" type="number" placeholder="Precio" />
+        <button id="addBtn">Agregar</button>
       </div>
+    </section>
 
-      <div id="ventas" class="tab hidden">
+    <!-- VENTAS -->
+    <section id="ventas" class="tab hidden">
+      <div class="card">
         <h2>Ventas</h2>
         <table id="salesTable">
           <thead><tr><th>Fecha</th><th>Detalle</th><th>Total</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
-
-      <div id="nueva-venta" class="tab hidden">
-        <h2>Nueva venta</h2>
-        <div id="ventaForm"></div>
-        <button id="confirmSale">Confirmar venta</button>
-      </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <small>© Óptica La Fina</small>
-  </footer>
-
+  <footer class="footer"><small>© Óptica La Fina</small></footer>
   <script src="app.js"></script>
 </body>
 </html>
