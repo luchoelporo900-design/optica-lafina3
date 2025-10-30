@@ -1,290 +1,95 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin — Óptica La Fina</title>
-  <link rel="icon" href="optica_lafina.png" />
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración | Óptica La Fina</title>
+  <link rel="icon" href="logo.png">
   <style>
-    :root {
-      --gold: #C59D5F;
-      --gold-glow: #ffd699;
-      --bg: #0e0e10;
-      --panel: #151517;
-      --stroke: #29292d;
-      --text: #f4f4f4;
-      --muted: #b8b8bc;
+    body {
+      background-color: #000;
+      color: #f5f5f5;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
     }
-
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0; padding: 0;
-      background: var(--bg); color: var(--text);
-      font-family: "Segoe UI", Roboto, Arial;
-      overflow-x: hidden;
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #111;
+      border-bottom: 2px solid #c59d5f;
+      padding: 10px;
     }
-
-    a { color: var(--gold); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* === ANIMACIONES === */
-    @keyframes shimmer {
-      0% { background-position: -200% center; }
-      100% { background-position: 200% center; }
+    header img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid #c59d5f;
+      margin-right: 15px;
+      object-fit: cover;
     }
-
-    @keyframes glow {
-      0%, 100% { box-shadow: 0 0 8px rgba(197,157,95,0.4), 0 0 15px rgba(197,157,95,0.2); }
-      50% { box-shadow: 0 0 15px rgba(255,230,160,0.8), 0 0 30px rgba(255,230,180,0.4); }
+    header h1 {
+      color: #c59d5f;
+      font-weight: 700;
     }
-
-    @keyframes pulseGold {
-      0% { box-shadow: 0 0 0 rgba(197,157,95,0.6); transform: scale(1); }
-      50% { box-shadow: 0 0 15px rgba(255,210,120,0.8); transform: scale(1.05); }
-      100% { box-shadow: 0 0 0 rgba(197,157,95,0.6); transform: scale(1); }
+    form {
+      margin: 30px auto;
+      max-width: 700px;
+      background: #111;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #c59d5f;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
     }
-
-    /* Fondo dorado animado */
-    @keyframes bgSweep {
-      0% { transform: translate3d(-20%, -10%, 0) rotate(0deg) scale(1); opacity:.18; }
-      50% { transform: translate3d(15%, 10%, 0) rotate(8deg) scale(1.05); opacity:.28; }
-      100% { transform: translate3d(-20%, -10%, 0) rotate(0deg) scale(1); opacity:.18; }
+    input, select {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #c59d5f;
+      background: #222;
+      color: #f5f5f5;
     }
-    body::before{
-      content:"";
-      position: fixed;
-      inset: -10%;
-      z-index: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(60rem 35rem at 20% 20%, rgba(197,157,95,.22), transparent 60%),
-        radial-gradient(45rem 30rem at 80% 60%, rgba(255,230,180,.18), transparent 65%),
-        radial-gradient(30rem 25rem at 40% 85%, rgba(255,213,130,.12), transparent 70%),
-        linear-gradient(120deg, rgba(255,240,210,.06), rgba(0,0,0,0) 50%);
-      filter: blur(14px) saturate(105%);
-      animation: bgSweep 16s ease-in-out infinite;
+    button {
+      background-color: #c59d5f;
+      border: none;
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
     }
-    body::after{
-      content:"";
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      background-image: url("data:image/svg+xml;utf8,\
-<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'>\
-<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='table' tableValues='0 0 .05'/></feComponentTransfer></filter>\
-<rect width='100%' height='100%' filter='url(%23n)'/>\
-</svg>");
-      opacity:.45;
-      mix-blend-mode: soft-light;
+    button:hover {
+      background-color: #f5c678;
     }
-    .topbar, .wrap { position: relative; z-index: 1; }
-
-    /* Top bar */
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 18px;
-      background: linear-gradient(90deg, #111 0%, #191919 40%, #111 100%);
-      border-bottom: 2px solid var(--gold);
-      box-shadow: 0 0 15px rgba(197,157,95,.3);
-      position: sticky; top: 0; z-index: 20;
-      animation: glow 4s ease-in-out infinite;
-    }
-
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .logo {
-      width: 45px; height: 45px;
-      border-radius: 50%; border: 2px solid var(--gold);
-      object-fit: cover; animation: glow 5s ease-in-out infinite;
-    }
-    .title {
-      font-weight: 900; letter-spacing: .5px;
-      background: linear-gradient(90deg, var(--gold), var(--gold-glow), var(--gold));
-      background-size: 200%;
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      animation: shimmer 6s linear infinite;
-    }
-
-    .top-actions { display: flex; align-items: center; gap: 12px; }
-    .btn-sm {
-      background: none; border: 1px solid var(--gold); color: var(--gold);
-      padding: 5px 12px; border-radius: 6px; cursor: pointer;
-      font-weight: 600; transition: all .3s ease;
-    }
-    .btn-sm:hover { background: var(--gold); color: #111; }
-
-    /* Layout */
-    .wrap { max-width: 1100px; margin: 25px auto; padding: 0 16px; }
-    .card {
-      background: var(--panel); border: 1px solid var(--stroke);
-      border-radius: 14px; padding: 18px; margin-bottom: 16px;
-      box-shadow: 0 0 10px rgba(0,0,0,.25);
-      transition: transform .2s ease, box-shadow .3s ease;
-    }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 0 25px rgba(197,157,95,0.15); }
-    .muted { color: var(--muted); }
-
-    /* Formulario */
-    .row { display: flex; flex-wrap: wrap; gap: 8px; }
-    input, select, button {
-      padding: 10px; border-radius: 10px;
-      border: 1px solid var(--stroke); background: #0b0b0d;
-      color: var(--text); outline: none; transition: border-color .2s ease;
-    }
-    input:focus, select:focus { border-color: var(--gold); }
-
-    .btn {
-      cursor: pointer; background: var(--gold); color: #111;
-      border: none; font-weight: 700;
-      transition: filter .2s ease, transform .1s ease;
-    }
-    .btn:hover { filter: brightness(1.1); }
-    .btn:active {
-      animation: pulseGold 0.5s ease;
-      filter: brightness(1.2);
-    }
-
-    .preview {
-      display: none; width: 80px; height: 80px;
-      object-fit: cover; border: 1px solid var(--stroke);
-      border-radius: 10px; background: #000;
-    }
-
-    /* Login */
-    #loginBox {
-      background: var(--panel);
-      border: 1px solid var(--stroke);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    #loginMsg { color: #ff9999; margin-left: 8px; }
-    #adminArea { display: none; }
   </style>
 </head>
 <body>
-  <!-- HEADER -->
-  <header class="topbar">
-    <div class="brand">
-      <img src="optica_lafina.png" alt="Óptica La Fina" class="logo" />
-      <div class="title">ÓPTICA LA FINA — ADMIN</div>
-    </div>
-    <div class="top-actions">
-      <a class="btn-sm" href="/">Catálogo</a>
-      <button id="btnLogout" class="btn-sm" style="display:none;">Cerrar sesión</button>
-    </div>
+
+  <header>
+    <img src="logo.png" alt="Óptica La Fina">
+    <h1>Panel de Administración</h1>
   </header>
 
-  <div class="wrap">
-    <!-- LOGIN -->
-    <div id="loginBox" class="card">
-      <h3>Acceso administrador</h3>
-      <div class="row">
-        <input id="adminPass" type="password" placeholder="Contraseña" style="min-width:220px">
-        <button id="btnLogin" class="btn">Entrar</button>
-        <span id="loginMsg"></span>
-      </div>
-      <div class="muted" style="margin-top:6px">
-        Ingresá la clave de administración (se guarda en una sesión segura).
-      </div>
-    </div>
+  <form id="formulario">
+    <input type="text" id="nombre" placeholder="Nombre del producto" required>
+    <input type="number" id="stock" placeholder="Stock" required>
+    <input type="number" id="precio" placeholder="Precio" required>
+    <input type="text" id="codigo" placeholder="Código (opcional)">
+    <select id="categoria">
+      <option value="Recetado">Recetado</option>
+      <option value="Sol">Sol</option>
+      <option value="Niños">Niños</option>
+      <option value="Mujer">Mujer</option>
+      <option value="Hombre">Hombre</option>
+    </select>
+    <input type="file" id="imagen" accept="image/*">
+    <button type="submit">Subir Producto</button>
+  </form>
 
-    <!-- ADMIN -->
-    <div id="adminArea">
-      <div class="card">
-        <h2 style="margin-top:0">Agregar producto</h2>
-        <div class="muted" style="margin-bottom:8px">
-          Completá los campos o subí una foto desde tu galería.
-        </div>
-        <div class="row">
-          <input id="pName" placeholder="Nombre">
-          <input id="pStock" type="number" placeholder="Stock">
-          <input id="pPrice" type="number" placeholder="Precio">
-          <input id="pCode" placeholder="Código (opcional)">
-          <select id="pCategory">
-            <option>Recetado</option><option>Sol</option>
-            <option>Hombre</option><option>Mujer</option>
-            <option>Niños</option><option>Metal</option>
-            <option>Acetato</option><option>Titanio</option>
-          </select>
-          <input id="pImage" placeholder="URL de imagen (opcional)" style="min-width:260px">
-          <input id="pFile" type="file" accept="image/*" style="display:none">
-          <button id="pickFile" class="btn">Subir imagen</button>
-          <img id="preview" class="preview" alt="preview">
-          <button id="addBtn" class="btn">Agregar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- JS -->
-  <script>
-    const $ = s => document.querySelector(s);
-    function showAdmin(show){
-      $("#adminArea").style.display = show ? "block" : "none";
-      $("#loginBox").style.display = show ? "none" : "block";
-      $("#btnLogout").style.display = show ? "inline-block" : "none";
-    }
-
-    $("#btnLogin").onclick = async ()=>{
-      const pw = $("#adminPass").value.trim();
-      $("#loginMsg").textContent = "";
-      const r = await fetch("/api/auth/admin",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({password:pw}),
-        credentials:"include"
-      });
-      if(r.ok){ showAdmin(true); } else { $("#loginMsg").textContent="Contraseña incorrecta"; }
-    };
-
-    $("#btnLogout").onclick = async ()=>{
-      await fetch("/api/logout",{method:"POST",credentials:"include"});
-      showAdmin(false);
-    };
-
-    window.addEventListener("DOMContentLoaded", async ()=>{
-      const r = await fetch("/api/me",{credentials:"include"});
-      const data = await r.json();
-      showAdmin(!!data.ok);
-    });
-
-    $("#pickFile").onclick=()=>$("#pFile").click();
-    $("#pFile").onchange=async e=>{
-      const file=e.target.files?.[0];
-      if(!file)return;
-      const fd=new FormData();
-      fd.append("image",file);
-      const up=await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
-      const data=await up.json();
-      if(!data.ok){alert(data.error||"No se pudo subir");return;}
-      $("#pImage").value=data.url;
-      $("#preview").src=data.url;
-      $("#preview").style.display="inline-block";
-      alert("Imagen subida ✔");
-    };
-
-    $("#addBtn").onclick=async ()=>{
-      const name=$("#pName").value.trim();
-      const stock=Number($("#pStock").value||0);
-      const price=Number($("#pPrice").value||0);
-      const code=$("#pCode").value.trim();
-      const category=$("#pCategory").value;
-      const image=$("#pImage").value.trim();
-      if(!name){alert("Nombre requerido");return;}
-      const r=await fetch("/api/products",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({name,stock,price,code,category,image}),
-        credentials:"include"
-      });
-      const data=await r.json();
-      if(!data.ok){alert(data.error||"No se pudo agregar");return;}
-      $("#pName").value=$("#pStock").value=$("#pPrice").value=$("#pCode").value=$("#pImage").value="";
-      $("#preview").style.display="none";
-      alert("Producto agregado ✔");
-    };
-  </script>
+  <script src="stock.js"></script>
 </body>
 </html>
