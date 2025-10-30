@@ -1,0 +1,75 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Óptica La Fina</title>
+  <link rel="icon" href="optica_lafina.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <img src="optica_lafina.png" alt="Óptica La Fina" class="logo">
+    <h1>Óptica La Fina</h1>
+    <div id="roleBadge" class="role"></div>
+  </header>
+
+  <main id="app">
+    <section id="authView" class="card">
+      <h2>Ingresar</h2>
+      <p><strong>Usuario</strong> (sin contraseña)</p>
+      <button id="guestBtn">Entrar como Usuario</button>
+      <hr>
+      <p><strong>Administrador</strong></p>
+      <input type="password" id="adminPass" placeholder="Contraseña admin" />
+      <button id="adminBtn">Entrar como Admin</button>
+      <p class="hint">Admin por defecto: <code>lafina123325</code></p>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <nav class="tabs">
+        <button data-tab="stock">Stock</button>
+        <button data-tab="ventas">Ventas</button>
+        <button data-tab="nueva-venta">Nueva venta</button>
+      </nav>
+
+      <div id="stock" class="tab">
+        <h2>Stock</h2>
+        <table id="stockTable">
+          <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th class="adminOnly">Acciones</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <div id="addProduct" class="card adminOnly">
+          <h3>Agregar producto</h3>
+          <input id="pName" placeholder="Nombre" />
+          <input id="pStock" type="number" placeholder="Stock" />
+          <input id="pPrice" type="number" placeholder="Precio" />
+          <button id="addBtn">Agregar</button>
+        </div>
+      </div>
+
+      <div id="ventas" class="tab hidden">
+        <h2>Ventas</h2>
+        <table id="salesTable">
+          <thead><tr><th>Fecha</th><th>Detalle</th><th>Total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="nueva-venta" class="tab hidden">
+        <h2>Nueva venta</h2>
+        <div id="ventaForm"></div>
+        <button id="confirmSale">Confirmar venta</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>© Óptica La Fina</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
