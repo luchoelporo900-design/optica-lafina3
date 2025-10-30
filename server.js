@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import { Low } from "lowdb";
@@ -6,13 +5,37 @@ import { JSONFile } from "lowdb/node";
 import { nanoid } from "nanoid";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
+import multer from "multer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const name = `${Date.now()}_${safe}`;
+    cb(null, name);
+  }
+});
+const upload = multer({ storage });
+
+// servir estáticos de /uploads
+app.use("/uploads", express.static(uploadsDir));
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
+app.use(express.static(path.join(__dirname, "public"), { etag:false, lastModified:false, maxAge:0 }));
+app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "lafina123325";
 
@@ -48,10 +71,13 @@ function requireAdmin(req, res, next) {
   return res.status(403).json({ ok: false, error: "Solo admin." });
 }
 
-app.get("/api/products", async (req, res) => {
-  await db.read();
-  res.json({ ok: true, products: db.data.products });
+// SUBIR IMAGEN (form-data: image)
+app.post("/api/upload", requireAdmin, upload.single("image"), (req, res) => {
+  if (!req.file) return res.status(400).json({ ok: false, error: "Archivo faltante" });
+  const publicUrl = `/uploads/${req.file.filename}`;
+  res.json({ ok: true, url: publicUrl });
 });
+
 
 app.post("/api/products", requireAdmin, async (req, res) => {
   const { name, stock, price } = req.body || {};
