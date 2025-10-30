@@ -5,83 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Óptica La Fina</title>
   <link rel="icon" href="optica_lafina.png" />
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=10" />
 </head>
-<body>
+<body class="theme-dark">
   <header class="topbar">
     <div class="brand">
-      <img src="optica_lafina.png" alt="Óptica La Fina" class="logo">
-      <h1>Óptica La Fina</h1>
+      <img src="optica_lafina.png" class="logo" alt="La Fina">
+      <strong>ÓPTICA LA FINA</strong>
     </div>
-    <nav class="tabs">
-      <button data-tab="catalogo" class="active">Catálogo</button>
-      <button data-tab="stock" class="adminOnly hidden">Stock</button>
-      <button data-tab="ventas" class="adminOnly hidden">Ventas</button>
-    </nav>
-    <div class="right">
-      <span id="roleBadge" class="role"></span>
-      <button id="loginBtn" class="ghost">Admin</button>
-    </div>
+    <div class="spacer"></div>
+    <a id="adminLink" class="admin-link">Subir productos (Admin)</a>
   </header>
 
-  <main id="app">
-    <!-- Modal de login -->
-    <div id="loginModal" class="modal hidden">
-      <div class="card modal-card">
-        <h3>Acceso administrador</h3>
-        <input type="password" id="adminPass" placeholder="Contraseña admin" />
-        <div class="row">
-          <button id="adminEnter">Entrar</button>
-          <button id="closeModal" class="secondary">Cancelar</button>
-        </div>
-        <p class="hint">Clave por defecto: <code>lafina123325</code></p>
+  <main class="container">
+    <h1 class="title">Catálogo de Lentes</h1>
+    <p class="subtitle">Elegí tus modelos favoritos y mandanos tu pedido por WhatsApp.</p>
+
+    <div class="toolbar">
+      <input id="q" class="search" placeholder="Buscar por nombre o código...">
+      <div class="chips" id="chips">
+        <button class="chip active" data-cat="Todos">Todos</button>
+        <button class="chip" data-cat="Hombre">Hombre</button>
+        <button class="chip" data-cat="Mujer">Mujer</button>
+        <button class="chip" data-cat="Niños">Niños</button>
+        <button class="chip" data-cat="Sol">Sol</button>
+        <button class="chip" data-cat="Recetado">Recetado</button>
+        <button class="chip" data-cat="Metal">Metal</button>
+        <button class="chip" data-cat="Acetato">Acetato</button>
+        <button class="chip" data-cat="Titanio">Titanio</button>
       </div>
     </div>
 
-    <!-- Catálogo -->
-    <section id="catalogo" class="tab">
-      <div class="catalogo-grid" id="cardGrid"></div>
-      <aside class="carrito">
-        <h3>Carrito</h3>
-        <div id="cartList" class="cart-list"></div>
-        <div class="cart-footer">
-          <div>Total: <strong id="cartTotal">0</strong></div>
-          <button id="waBtn">Pedir por WhatsApp</button>
-        </div>
-        <small class="hint">Ajustá cantidades y enviamos tu pedido por WhatsApp.</small>
-      </aside>
-    </section>
+    <div id="grid" class="grid"></div>
 
-    <!-- Stock -->
-    <section id="stock" class="tab hidden">
-      <div class="card">
-        <h2>Stock</h2>
-        <table id="stockTable">
-          <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Acciones</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <hr/>
-        <h3>Agregar producto</h3>
-        <input id="pName" placeholder="Nombre" />
-        <input id="pStock" type="number" placeholder="Stock" />
-        <input id="pPrice" type="number" placeholder="Precio" />
-        <button id="addBtn">Agregar</button>
-      </div>
-    </section>
-
-    <!-- Ventas -->
-    <section id="ventas" class="tab hidden">
-      <div class="card">
-        <h2>Ventas</h2>
-        <table id="salesTable">
-          <thead><tr><th>Fecha</th><th>Detalle</th><th>Total</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
+    <div class="favbar">
+      <span>❤ <span id="favCount">0</span> item(s) en favoritos</span>
+      <button id="waFavs" class="btn btn-gold">Enviar por WhatsApp</button>
+    </div>
   </main>
 
-  <footer class="footer"><small>© Óptica La Fina</small></footer>
-  <script src="app.js?v=4"></script>
+  <!-- Modal Admin -->
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-card">
+      <h3>Acceso administrador</h3>
+      <input type="password" id="adminPass" placeholder="Contraseña admin">
+      <div class="row">
+        <button id="adminEnter" class="btn btn-gold">Entrar</button>
+        <button id="adminCancel" class="btn">Cancelar</button>
+      </div>
+      <p class="hint">Clave por defecto: <code>lafina123325</code></p>
+    </div>
+  </div>
+
+  <footer class="footer">Óptica La Fina — Santaní / PV</footer>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
