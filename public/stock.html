@@ -1,41 +1,127 @@
-<style>
-  #adminArea{ display:none; }
-  #loginBox{ margin:14px 0; padding:10px; border:1px solid #ccc; border-radius:8px; max-width:420px }
-</style>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — Óptica La Fina</title>
+  <link rel="icon" href="optica_lafina.png" />
 
-<div id="loginBox">
-  <h3>Acceso administrador</h3>
-  <input id="adminPass" type="password" placeholder="Contraseña" />
-  <button id="btnLogin">Entrar</button>
-  <span id="loginMsg" style="margin-left:8px;color:#b00"></span>
-</div>
+  <style>
+    :root{
+      --gold:#C59D5F; --gold-2:#d8b884;
+      --bg:#0e0e10; --panel:#151517; --stroke:#29292d;
+      --text:#eeeeee; --muted:#b8b8bc;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    a{color:var(--gold);text-decoration:none}
+    a:hover{text-decoration:underline}
 
-<div id="adminArea">
-  <!-- (tu bloque de “Agregar producto” queda aquí tal cual lo tenías) -->
-  <!-- ... -->
-</div>
-<h3>Agregar producto</h3>
-<div class="row">
-  <input id="pName" placeholder="Nombre" />
-  <input id="pStock" type="number" placeholder="Stock" />
-  <input id="pPrice" type="number" placeholder="Precio" />
-  <input id="pCode" placeholder="Código (opcional)" />
-  <select id="pCategory">
-    <option>Recetado</option><option>Sol</option><option>Hombre</option>
-    <option>Mujer</option><option>Niños</option><option>Metal</option>
-    <option>Acetato</option><option>Titanio</option>
-  </select>
+    /* Topbar */
+    .topbar{
+      position:sticky;top:0;z-index:20;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 18px;background:#111;border-bottom:2px solid var(--gold);
+      box-shadow:0 0 12px rgba(197,157,95,.25);
+    }
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:40px;height:40px;border-radius:50%;object-fit:cover;
+      border:2px solid var(--gold);background:#000}
+    .title{font-weight:900;letter-spacing:.5px;color:var(--gold)}
+    .top-actions{display:flex;gap:10px;align-items:center}
+    .chip{border:1px solid var(--gold);color:var(--gold);padding:6px 10px;border-radius:999px}
 
-  <!-- URL de imagen (se completa sola después del upload) -->
-  <input id="pImage" placeholder="URL de imagen (opcional)" style="min-width:260px" />
+    /* Layout */
+    .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
+    .card{background:var(--panel);border:1px solid var(--stroke);border-radius:14px;
+      padding:14px;margin-bottom:16px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+    h2,h3{margin:.2rem 0 .6rem}
+    .muted{color:var(--muted)}
 
-  <!-- Archivo desde galería -->
-  <input id="pFile" type="file" accept="image/*" style="display:none" />
-  <button id="pickFile">Subir imagen</button>
-  <img id="preview" alt="" style="display:none; width:80px; height:80px; object-fit:cover; border:1px solid #ccc; border-radius:8px;">
+    /* Form */
+    .row{display:flex;flex-wrap:wrap;gap:8px}
+    input,select,button{
+      padding:10px;border-radius:10px;border:1px solid var(--stroke);
+      background:#0b0b0d;color:var(--text);outline:none
+    }
+    input:focus,select:focus{border-color:var(--gold)}
+    .btn{background:#222;border:1px solid #333;cursor:pointer}
+    .btn.gold{background:var(--gold);color:#111;border:none;font-weight:800}
+    .btn.gold:hover{filter:brightness(1.05)}
+    .preview{
+      display:none;width:80px;height:80px;object-fit:cover;border:1px solid var(--stroke);
+      border-radius:10px;background:#000
+    }
 
-  <button id="addBtn">Agregar</button>
-</div>
+    /* Login panel */
+    #loginBox{background:var(--panel);border:1px solid var(--stroke);
+      border-radius:14px;padding:16px;margin:0 0 16px}
+    #loginMsg{color:#ffb3b3;margin-left:8px}
 
-<!-- al final del body debe estar esta línea -->
-<script src="stock.js?v=2"></script>
+    /* Visibilidad admin */
+    #adminArea{display:none}
+  </style>
+</head>
+<body>
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="optica_lafina.png" alt="Óptica La Fina" class="logo">
+      <div class="title">ÓPTICA LA FINA — Administrador</div>
+    </div>
+    <div class="top-actions">
+      <a class="chip" href="/">Ir al catálogo</a>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <!-- LOGIN -->
+    <div id="loginBox" class="card">
+      <h3>Acceso administrador</h3>
+      <div class="row">
+        <input id="adminPass" type="password" placeholder="Contraseña" style="min-width:220px">
+        <button id="btnLogin" class="btn gold">Entrar</button>
+        <span id="loginMsg"></span>
+      </div>
+      <div class="muted" style="margin-top:6px">La sesión se guarda en una cookie segura (no visible en el navegador).</div>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="adminArea">
+      <div class="card">
+        <h2 style="margin-top:0">Agregar producto</h2>
+        <div class="muted" style="margin-bottom:8px">
+          Completá los campos o subí una foto desde tu galería. La URL se llena automáticamente.
+        </div>
+        <div class="row">
+          <input id="pName" placeholder="Nombre">
+          <input id="pStock" type="number" placeholder="Stock">
+          <input id="pPrice" type="number" placeholder="Precio">
+          <input id="pCode" placeholder="Código (opcional)">
+          <select id="pCategory">
+            <option>Recetado</option><option>Sol</option><option>Hombre</option>
+            <option>Mujer</option><option>Niños</option><option>Metal</option>
+            <option>Acetato</option><option>Titanio</option>
+          </select>
+
+          <!-- URL (se completa tras subir imagen) -->
+          <input id="pImage" placeholder="URL de imagen (opcional)" style="min-width:260px">
+
+          <!-- Galería -->
+          <input id="pFile" type="file" accept="image/*" style="display:none">
+          <button id="pickFile" class="btn gold">Subir imagen</button>
+          <img id="preview" class="preview" alt="preview">
+
+          <button id="addBtn" class="btn gold">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JS del admin -->
+  <script src="stock.js?v=3"></script>
+</body>
+</html>
