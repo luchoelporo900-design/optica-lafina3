@@ -1,179 +1,129 @@
-console.log("App La Fina v3");
-const $ = (q) => document.querySelector(q);
-const $$ = (q) => Array.from(document.querySelectorAll(q));
+console.log("La Fina Catalog v10");
 
-let ROLE = "guest";
+const $ = (q)=>document.querySelector(q);
+const $$ = (q)=>Array.from(document.querySelectorAll(q));
+
+const WHATSAPP_PHONE = "5959XXXXXXXX"; // ← poné tu número (sin +)
 let PRODUCTS = [];
-let CART = []; // {id, name, price, qty}
+let FAVORITES = new Set();
+let CURRENT_CAT = "Todos";
 
-const WHATSAPP_PHONE = "595987499717"; // ← PONÉ AQUÍ TU NÚMERO (sin +). Ej: 595981234567
+function format(n){ return Number(n||0).toLocaleString("es-PY"); }
+function shortId(id){ return (id||"").slice(-6).toUpperCase(); }
 
-function format(n){ return Number(n||0).toLocaleString(); }
+// Imagen por defecto si el producto no trae
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1523289333742-be1143f6b766?q=80&w=1200&auto=format&fit=crop";
 
-function setRole(role){
-  ROLE = role;
-  $("#roleBadge").textContent = role.toUpperCase();
-  const adminEls = $$(".adminOnly");
-  adminEls.forEach(el => el.classList.toggle("hidden", role!=="admin"));
-}
-
-async function fetchJSON(url, opts={}){
-  const res = await fetch(url, opts);
-  return res.json();
-}
+async function fetchJSON(url,opts={}){ const r = await fetch(url,opts); return r.json(); }
 
 async function loadProducts(){
   const data = await fetchJSON("/api/products");
-  PRODUCTS = data.products || [];
-  renderCatalog();
-  renderStockTable();
+  // adaptamos al formato de tarjetas
+  PRODUCTS = (data.products||[]).map(p=>({
+    id: p.id,
+    title: p.name,
+    price: p.price,
+    stock: p.stock,
+    // campos opcionales si más adelante los guardamos en la DB
+    code: p.code || shortId(p.id),
+    category: p.category || "Recetado",
+    image: p.image || FALLBACK_IMG
+  }));
+  renderGrid();
 }
 
-function renderCatalog(){
-  const grid = $("#cardGrid");
-  grid.innerHTML = "";
-  PRODUCTS.forEach(p=>{
-    const card = document.createElement("div");
-    card.className = "card product-card";
-    card.innerHTML = `
-      <div class="prod-title">${p.name}</div>
-      <div class="prod-price">Gs. ${format(p.price)}</div>
-      <div class="prod-stock">Disp: ${p.stock}</div>
-      <div class="row">
-        <button data-id="${p.id}" class="add">Añadir</button>
-        <button data-id="${p.id}" class="sub secondary">-</button>
-      </div>
-    `;
-    grid.appendChild(card);
+function renderGrid(){
+  const grid = $("#grid"); grid.innerHTML = "";
+  const q = $("#q").value.trim().toLowerCase();
+  const items = PRODUCTS.filter(p=>{
+    const byCat = (CURRENT_CAT==="Todos") || (p.category===CURRENT_CAT);
+    const byQuery = !q || (p.title.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
+    return byCat && byQuery;
   });
+
+  for(const it of items){
+    const card = document.createElement("article");
+    card.className = "card";
+    card.innerHTML = `
+      <img class="img" src="${it.image}" alt="${it.title}">
+      <div class="body">
+        <div class="title-sm">${it.title}</div>
+        <div class="price">Gs ${format(it.price)}</div>
+        <div class="meta">Código: ${it.code}</div>
+        <div class="meta">Categoría: ${it.category}</div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-gold" data-wa="${it.id}">WhatsApp</button>
+          <button class="btn btn-outline" data-fav="${it.id}">${FAVORITES.has(it.id)?"Quitar":"Favoritos"}</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  }
 
   grid.onclick = (e)=>{
-    const id = e.target.dataset.id;
-    if(!id) return;
-    const p = PRODUCTS.find(x=>x.id===id);
-    if(!p) return;
-    if(e.target.classList.contains("add")) addToCart(p);
-    if(e.target.classList.contains("sub")) addToCart(p, -1);
+    const wa = e.target.closest("[data-wa]");
+    const fv = e.target.closest("[data-fav]");
+    if(wa) sendWA(wa.dataset.wa);
+    if(fv) toggleFav(fv.dataset.fav);
   };
 
-  renderCart();
+  $("#favCount").textContent = FAVORITES.size;
 }
 
-function addToCart(p, delta=1){
-  let line = CART.find(x=>x.id===p.id);
-  if(!line){ line = { id:p.id, name:p.name, price:p.price, qty:0 }; CART.push(line); }
-  line.qty = Math.max(0, line.qty + delta);
-  if(line.qty===0) CART = CART.filter(x=>x.id!==p.id);
-  renderCart();
+function toggleFav(id){
+  FAVORITES.has(id) ? FAVORITES.delete(id) : FAVORITES.add(id);
+  renderGrid();
 }
 
-function renderCart(){
-  const list = $("#cartList");
-  list.innerHTML = "";
-  let total = 0;
-  CART.forEach(i=>{
-    total += i.qty * i.price;
-    const row = document.createElement("div");
-    row.className = "cart-row";
-    row.innerHTML = `
-      <span>${i.qty}× ${i.name}</span>
-      <strong>Gs. ${format(i.qty*i.price)}</strong>
-    `;
-    list.appendChild(row);
-  });
-  $("#cartTotal").textContent = `Gs. ${format(total)}`;
+function sendWA(id){
+  const p = PRODUCTS.find(x=>x.id===id); if(!p) return;
+  const msg = encodeURIComponent(
+    `Hola! Me interesa este modelo:\n`+
+    `• ${p.title}\n`+
+    `• Código: ${p.code}\n`+
+    `• Precio: Gs ${format(p.price)}`
+  );
+  window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${msg}`,"_blank");
 }
 
-function renderStockTable(){
-  const tbody = $("#stockTable tbody");
-  if(!tbody) return;
-  tbody.innerHTML = "";
-  PRODUCTS.forEach(p=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${p.name}</td>
-      <td>${p.stock}</td>
-      <td>${format(p.price)}</td>
-      <td>
-        <button class="secondary" data-act="edit" data-id="${p.id}">Editar</button>
-        <button class="secondary" data-act="del" data-id="${p.id}">Borrar</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-
-  tbody.onclick = async (e)=>{
-    const btn = e.target.closest("button");
-    if(!btn) return;
-    const id = btn.dataset.id;
-    if(btn.dataset.act==="del"){
-      if(!confirm("¿Borrar producto?")) return;
-      await fetch(`/api/products/${id}`, { method:"DELETE", headers:{ "x-role": ROLE }});
-      await loadProducts();
-    }else{
-      const p = PRODUCTS.find(x=>x.id===id);
-      const name = prompt("Nombre:", p.name); if(name===null) return;
-      const stock = prompt("Stock:", p.stock); if(stock===null) return;
-      const price = prompt("Precio:", p.price); if(price===null) return;
-      await fetch(`/api/products/${id}`, {
-        method:"PUT",
-        headers:{ "Content-Type":"application/json", "x-role": ROLE },
-        body: JSON.stringify({ name, stock:Number(stock), price:Number(price) })
-      });
-      await loadProducts();
-    }
-  };
-}
-
-function setActiveTab(id){
-  $$(".tab").forEach(t=>t.classList.add("hidden"));
-  $$(".tabs button").forEach(b=>b.classList.remove("active"));
-  $(`#${id}`).classList.remove("hidden");
-  $(`.tabs button[data-tab="${id}"]`).classList.add("active");
-}
-
-function buildWhatsAppLink(){
-  if(!CART.length){ alert("Agregá productos al carrito"); return; }
-  const lines = CART.map(i=>`${i.qty}× ${i.name} - Gs. ${format(i.qty*i.price)}`);
-  const total = CART.reduce((s,i)=>s+i.qty*i.price,0);
-  const msg = `Hola! Quiero pedir:%0A${lines.join("%0A")}%0A%0ATotal: Gs. ${format(total)}`;
-  return `https://wa.me/${WHATSAPP_PHONE}?text=${msg}`;
+function sendFavsWA(){
+  if(FAVORITES.size===0){ alert("No hay favoritos seleccionados"); return; }
+  const list = PRODUCTS.filter(p=>FAVORITES.has(p.id))
+    .map(p=>`• ${p.title} (Gs ${format(p.price)})`).join("\n");
+  const msg = encodeURIComponent(`Hola! Estos son mis favoritos:\n${list}`);
+  window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${msg}`,"_blank");
 }
 
 function bindUI(){
-  // Tabs
-  $$(".tabs button").forEach(btn=>{
-    btn.onclick = ()=> setActiveTab(btn.dataset.tab);
+  // búsqueda
+  $("#q").addEventListener("input", renderGrid);
+
+  // chips de categoría
+  $("#chips").addEventListener("click", (e)=>{
+    const chip = e.target.closest(".chip"); if(!chip) return;
+    $$(".chip").forEach(c=>c.classList.remove("active"));
+    chip.classList.add("active");
+    CURRENT_CAT = chip.dataset.cat;
+    renderGrid();
   });
 
-  // WhatsApp
-  $("#waBtn").onclick = ()=>{
-    const url = buildWhatsAppLink();
-    if(url) window.open(url, "_blank");
-  };
+  // favoritos -> whatsapp
+  $("#waFavs").onclick = sendFavsWA;
 
-  // Login modal
-  $("#loginBtn").onclick = ()=> $("#loginModal").classList.remove("hidden");
-  $("#closeModal").onclick = ()=> $("#loginModal").classList.add("hidden");
+  // admin modal
+  $("#adminLink").onclick = ()=> $("#loginModal").classList.remove("hidden");
+  $("#adminCancel").onclick = ()=> $("#loginModal").classList.add("hidden");
   $("#adminEnter").onclick = async ()=>{
     const password = $("#adminPass").value;
     const res = await fetch("/api/auth/admin", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
+      method:"POST", headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ password })
     });
-    if(res.ok){
-      setRole("admin");
-      $("#loginModal").classList.add("hidden");
-      setActiveTab("stock");
-    }else{
-      alert("Contraseña incorrecta");
-    }
+    if(res.ok){ location.href = "/stock"; } // simple redirección (o podemos mostrar pestañas)
+    else alert("Contraseña incorrecta");
   };
 }
 
 window.addEventListener("DOMContentLoaded", async ()=>{
   bindUI();
-  setRole("guest");
-  setActiveTab("catalogo");
   await loadProducts();
 });
