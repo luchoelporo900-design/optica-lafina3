@@ -19,13 +19,12 @@
 
     * { box-sizing: border-box; }
     html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--text);
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
       font-family: "Segoe UI", Roboto, Arial;
       overflow-x: hidden;
     }
+
     a { color: var(--gold); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
@@ -40,59 +39,86 @@
       50% { box-shadow: 0 0 15px rgba(255,230,160,0.8), 0 0 30px rgba(255,230,180,0.4); }
     }
 
+    @keyframes pulseGold {
+      0% { box-shadow: 0 0 0 rgba(197,157,95,0.6); transform: scale(1); }
+      50% { box-shadow: 0 0 15px rgba(255,210,120,0.8); transform: scale(1.05); }
+      100% { box-shadow: 0 0 0 rgba(197,157,95,0.6); transform: scale(1); }
+    }
+
+    /* Fondo dorado animado */
+    @keyframes bgSweep {
+      0% { transform: translate3d(-20%, -10%, 0) rotate(0deg) scale(1); opacity:.18; }
+      50% { transform: translate3d(15%, 10%, 0) rotate(8deg) scale(1.05); opacity:.28; }
+      100% { transform: translate3d(-20%, -10%, 0) rotate(0deg) scale(1); opacity:.18; }
+    }
+    body::before{
+      content:"";
+      position: fixed;
+      inset: -10%;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(60rem 35rem at 20% 20%, rgba(197,157,95,.22), transparent 60%),
+        radial-gradient(45rem 30rem at 80% 60%, rgba(255,230,180,.18), transparent 65%),
+        radial-gradient(30rem 25rem at 40% 85%, rgba(255,213,130,.12), transparent 70%),
+        linear-gradient(120deg, rgba(255,240,210,.06), rgba(0,0,0,0) 50%);
+      filter: blur(14px) saturate(105%);
+      animation: bgSweep 16s ease-in-out infinite;
+    }
+    body::after{
+      content:"";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'>\
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='table' tableValues='0 0 .05'/></feComponentTransfer></filter>\
+<rect width='100%' height='100%' filter='url(%23n)'/>\
+</svg>");
+      opacity:.45;
+      mix-blend-mode: soft-light;
+    }
+    .topbar, .wrap { position: relative; z-index: 1; }
+
     /* Top bar */
     .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 12px 18px;
       background: linear-gradient(90deg, #111 0%, #191919 40%, #111 100%);
       border-bottom: 2px solid var(--gold);
-      box-shadow: 0 0 15px rgba(197,157,95, .3);
+      box-shadow: 0 0 15px rgba(197,157,95,.3);
       position: sticky; top: 0; z-index: 20;
       animation: glow 4s ease-in-out infinite;
     }
 
     .brand { display: flex; align-items: center; gap: 10px; }
     .logo {
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      border: 2px solid var(--gold);
-      object-fit: cover;
-      animation: glow 5s ease-in-out infinite;
+      width: 45px; height: 45px;
+      border-radius: 50%; border: 2px solid var(--gold);
+      object-fit: cover; animation: glow 5s ease-in-out infinite;
     }
     .title {
-      font-weight: 900;
-      letter-spacing: .5px;
+      font-weight: 900; letter-spacing: .5px;
       background: linear-gradient(90deg, var(--gold), var(--gold-glow), var(--gold));
       background-size: 200%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: shimmer 6s linear infinite;
     }
 
     .top-actions { display: flex; align-items: center; gap: 12px; }
     .btn-sm {
-      background: none;
-      border: 1px solid var(--gold);
-      color: var(--gold);
-      padding: 5px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all .3s ease;
+      background: none; border: 1px solid var(--gold); color: var(--gold);
+      padding: 5px 12px; border-radius: 6px; cursor: pointer;
+      font-weight: 600; transition: all .3s ease;
     }
     .btn-sm:hover { background: var(--gold); color: #111; }
 
     /* Layout */
     .wrap { max-width: 1100px; margin: 25px auto; padding: 0 16px; }
     .card {
-      background: var(--panel);
-      border: 1px solid var(--stroke);
-      border-radius: 14px;
-      padding: 18px;
-      margin-bottom: 16px;
+      background: var(--panel); border: 1px solid var(--stroke);
+      border-radius: 14px; padding: 18px; margin-bottom: 16px;
       box-shadow: 0 0 10px rgba(0,0,0,.25);
       transition: transform .2s ease, box-shadow .3s ease;
     }
@@ -102,32 +128,27 @@
     /* Formulario */
     .row { display: flex; flex-wrap: wrap; gap: 8px; }
     input, select, button {
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid var(--stroke);
-      background: #0b0b0d;
-      color: var(--text);
-      outline: none;
-      transition: border-color .2s ease;
+      padding: 10px; border-radius: 10px;
+      border: 1px solid var(--stroke); background: #0b0b0d;
+      color: var(--text); outline: none; transition: border-color .2s ease;
     }
     input:focus, select:focus { border-color: var(--gold); }
+
     .btn {
-      cursor: pointer;
-      background: var(--gold);
-      color: #111;
-      border: none;
-      font-weight: 700;
-      transition: filter .2s ease;
+      cursor: pointer; background: var(--gold); color: #111;
+      border: none; font-weight: 700;
+      transition: filter .2s ease, transform .1s ease;
     }
     .btn:hover { filter: brightness(1.1); }
+    .btn:active {
+      animation: pulseGold 0.5s ease;
+      filter: brightness(1.2);
+    }
+
     .preview {
-      display: none;
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border: 1px solid var(--stroke);
-      border-radius: 10px;
-      background: #000;
+      display: none; width: 80px; height: 80px;
+      object-fit: cover; border: 1px solid var(--stroke);
+      border-radius: 10px; background: #000;
     }
 
     /* Login */
@@ -213,4 +234,57 @@
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({password:pw}),
-        credentials:"inclu
+        credentials:"include"
+      });
+      if(r.ok){ showAdmin(true); } else { $("#loginMsg").textContent="Contraseña incorrecta"; }
+    };
+
+    $("#btnLogout").onclick = async ()=>{
+      await fetch("/api/logout",{method:"POST",credentials:"include"});
+      showAdmin(false);
+    };
+
+    window.addEventListener("DOMContentLoaded", async ()=>{
+      const r = await fetch("/api/me",{credentials:"include"});
+      const data = await r.json();
+      showAdmin(!!data.ok);
+    });
+
+    $("#pickFile").onclick=()=>$("#pFile").click();
+    $("#pFile").onchange=async e=>{
+      const file=e.target.files?.[0];
+      if(!file)return;
+      const fd=new FormData();
+      fd.append("image",file);
+      const up=await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
+      const data=await up.json();
+      if(!data.ok){alert(data.error||"No se pudo subir");return;}
+      $("#pImage").value=data.url;
+      $("#preview").src=data.url;
+      $("#preview").style.display="inline-block";
+      alert("Imagen subida ✔");
+    };
+
+    $("#addBtn").onclick=async ()=>{
+      const name=$("#pName").value.trim();
+      const stock=Number($("#pStock").value||0);
+      const price=Number($("#pPrice").value||0);
+      const code=$("#pCode").value.trim();
+      const category=$("#pCategory").value;
+      const image=$("#pImage").value.trim();
+      if(!name){alert("Nombre requerido");return;}
+      const r=await fetch("/api/products",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({name,stock,price,code,category,image}),
+        credentials:"include"
+      });
+      const data=await r.json();
+      if(!data.ok){alert(data.error||"No se pudo agregar");return;}
+      $("#pName").value=$("#pStock").value=$("#pPrice").value=$("#pCode").value=$("#pImage").value="";
+      $("#preview").style.display="none";
+      alert("Producto agregado ✔");
+    };
+  </script>
+</body>
+</html>
