@@ -125,5 +125,16 @@ function bindUI(){
 
 window.addEventListener("DOMContentLoaded", async ()=>{
   bindUI();
-  await loadProducts();
+  await loadProducts();// --- LOGIN LOCAL SIMPLIFICADO ---
+$("#adminEnter").onclick = ()=>{
+  const pass = $("#adminPass").value.trim();
+  if(pass === "lafina123325"){
+    alert("Acceso administrador correcto ✅");
+    $("#loginModal").classList.add("hidden");
+    window.location.href = "/stock"; // o cambiar por /admin.html si lo tenés
+  } else {
+    alert("Contraseña incorrecta ❌");
+  }
+};
+
 });
