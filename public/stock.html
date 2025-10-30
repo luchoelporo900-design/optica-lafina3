@@ -7,85 +7,166 @@
   <link rel="icon" href="optica_lafina.png" />
 
   <style>
-    :root{
-      --gold:#C59D5F; --gold-2:#d8b884;
-      --bg:#0e0e10; --panel:#151517; --stroke:#29292d;
-      --text:#eeeeee; --muted:#b8b8bc;
+    :root {
+      --gold: #C59D5F;
+      --gold-glow: #ffd699;
+      --bg: #0e0e10;
+      --panel: #151517;
+      --stroke: #29292d;
+      --text: #f4f4f4;
+      --muted: #b8b8bc;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    a{color:var(--gold);text-decoration:none}
-    a:hover{text-decoration:underline}
 
-    /* Topbar */
-    .topbar{
-      position:sticky;top:0;z-index:20;
-      display:flex;align-items:center;justify-content:space-between;
-      padding:12px 18px;background:#111;border-bottom:2px solid var(--gold);
-      box-shadow:0 0 12px rgba(197,157,95,.25);
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Roboto, Arial;
+      overflow-x: hidden;
     }
-    .brand{display:flex;align-items:center;gap:10px}
-    .logo{width:40px;height:40px;border-radius:50%;object-fit:cover;
-      border:2px solid var(--gold);background:#000}
-    .title{font-weight:900;letter-spacing:.5px;color:var(--gold)}
-    .top-actions{display:flex;gap:10px;align-items:center}
-    .chip{border:1px solid var(--gold);color:var(--gold);padding:6px 10px;border-radius:999px}
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* === ANIMACIONES === */
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 8px rgba(197,157,95,0.4), 0 0 15px rgba(197,157,95,0.2); }
+      50% { box-shadow: 0 0 15px rgba(255,230,160,0.8), 0 0 30px rgba(255,230,180,0.4); }
+    }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: linear-gradient(90deg, #111 0%, #191919 40%, #111 100%);
+      border-bottom: 2px solid var(--gold);
+      box-shadow: 0 0 15px rgba(197,157,95, .3);
+      position: sticky; top: 0; z-index: 20;
+      animation: glow 4s ease-in-out infinite;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      object-fit: cover;
+      animation: glow 5s ease-in-out infinite;
+    }
+    .title {
+      font-weight: 900;
+      letter-spacing: .5px;
+      background: linear-gradient(90deg, var(--gold), var(--gold-glow), var(--gold));
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 6s linear infinite;
+    }
+
+    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-sm {
+      background: none;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all .3s ease;
+    }
+    .btn-sm:hover { background: var(--gold); color: #111; }
 
     /* Layout */
-    .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
-    .card{background:var(--panel);border:1px solid var(--stroke);border-radius:14px;
-      padding:14px;margin-bottom:16px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
-    h2,h3{margin:.2rem 0 .6rem}
-    .muted{color:var(--muted)}
-
-    /* Form */
-    .row{display:flex;flex-wrap:wrap;gap:8px}
-    input,select,button{
-      padding:10px;border-radius:10px;border:1px solid var(--stroke);
-      background:#0b0b0d;color:var(--text);outline:none
+    .wrap { max-width: 1100px; margin: 25px auto; padding: 0 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 10px rgba(0,0,0,.25);
+      transition: transform .2s ease, box-shadow .3s ease;
     }
-    input:focus,select:focus{border-color:var(--gold)}
-    .btn{background:#222;border:1px solid #333;cursor:pointer}
-    .btn.gold{background:var(--gold);color:#111;border:none;font-weight:800}
-    .btn.gold:hover{filter:brightness(1.05)}
-    .preview{
-      display:none;width:80px;height:80px;object-fit:cover;border:1px solid var(--stroke);
-      border-radius:10px;background:#000
+    .card:hover { transform: translateY(-3px); box-shadow: 0 0 25px rgba(197,157,95,0.15); }
+    .muted { color: var(--muted); }
+
+    /* Formulario */
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    input, select, button {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: #0b0b0d;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s ease;
+    }
+    input:focus, select:focus { border-color: var(--gold); }
+    .btn {
+      cursor: pointer;
+      background: var(--gold);
+      color: #111;
+      border: none;
+      font-weight: 700;
+      transition: filter .2s ease;
+    }
+    .btn:hover { filter: brightness(1.1); }
+    .preview {
+      display: none;
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border: 1px solid var(--stroke);
+      border-radius: 10px;
+      background: #000;
     }
 
-    /* Login panel */
-    #loginBox{background:var(--panel);border:1px solid var(--stroke);
-      border-radius:14px;padding:16px;margin:0 0 16px}
-    #loginMsg{color:#ffb3b3;margin-left:8px}
-
-    /* Visibilidad admin */
-    #adminArea{display:none}
+    /* Login */
+    #loginBox {
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    #loginMsg { color: #ff9999; margin-left: 8px; }
+    #adminArea { display: none; }
   </style>
 </head>
 <body>
-  <!-- TOPBAR -->
+  <!-- HEADER -->
   <header class="topbar">
     <div class="brand">
-      <img src="optica_lafina.png" alt="Óptica La Fina" class="logo">
-      <div class="title">ÓPTICA LA FINA — Administrador</div>
+      <img src="optica_lafina.png" alt="Óptica La Fina" class="logo" />
+      <div class="title">ÓPTICA LA FINA — ADMIN</div>
     </div>
     <div class="top-actions">
-      <a class="chip" href="/">Ir al catálogo</a>
+      <a class="btn-sm" href="/">Catálogo</a>
+      <button id="btnLogout" class="btn-sm" style="display:none;">Cerrar sesión</button>
     </div>
   </header>
 
   <div class="wrap">
-
     <!-- LOGIN -->
     <div id="loginBox" class="card">
       <h3>Acceso administrador</h3>
       <div class="row">
         <input id="adminPass" type="password" placeholder="Contraseña" style="min-width:220px">
-        <button id="btnLogin" class="btn gold">Entrar</button>
+        <button id="btnLogin" class="btn">Entrar</button>
         <span id="loginMsg"></span>
       </div>
-      <div class="muted" style="margin-top:6px">La sesión se guarda en una cookie segura (no visible en el navegador).</div>
+      <div class="muted" style="margin-top:6px">
+        Ingresá la clave de administración (se guarda en una sesión segura).
+      </div>
     </div>
 
     <!-- ADMIN -->
@@ -93,7 +174,7 @@
       <div class="card">
         <h2 style="margin-top:0">Agregar producto</h2>
         <div class="muted" style="margin-bottom:8px">
-          Completá los campos o subí una foto desde tu galería. La URL se llena automáticamente.
+          Completá los campos o subí una foto desde tu galería.
         </div>
         <div class="row">
           <input id="pName" placeholder="Nombre">
@@ -101,27 +182,35 @@
           <input id="pPrice" type="number" placeholder="Precio">
           <input id="pCode" placeholder="Código (opcional)">
           <select id="pCategory">
-            <option>Recetado</option><option>Sol</option><option>Hombre</option>
-            <option>Mujer</option><option>Niños</option><option>Metal</option>
+            <option>Recetado</option><option>Sol</option>
+            <option>Hombre</option><option>Mujer</option>
+            <option>Niños</option><option>Metal</option>
             <option>Acetato</option><option>Titanio</option>
           </select>
-
-          <!-- URL (se completa tras subir imagen) -->
           <input id="pImage" placeholder="URL de imagen (opcional)" style="min-width:260px">
-
-          <!-- Galería -->
           <input id="pFile" type="file" accept="image/*" style="display:none">
-          <button id="pickFile" class="btn gold">Subir imagen</button>
+          <button id="pickFile" class="btn">Subir imagen</button>
           <img id="preview" class="preview" alt="preview">
-
-          <button id="addBtn" class="btn gold">Agregar</button>
+          <button id="addBtn" class="btn">Agregar</button>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- JS del admin -->
-  <script src="stock.js?v=3"></script>
-</body>
-</html>
+  <!-- JS -->
+  <script>
+    const $ = s => document.querySelector(s);
+    function showAdmin(show){
+      $("#adminArea").style.display = show ? "block" : "none";
+      $("#loginBox").style.display = show ? "none" : "block";
+      $("#btnLogout").style.display = show ? "inline-block" : "none";
+    }
+
+    $("#btnLogin").onclick = async ()=>{
+      const pw = $("#adminPass").value.trim();
+      $("#loginMsg").textContent = "";
+      const r = await fetch("/api/auth/admin",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({password:pw}),
+        credentials:"inclu
