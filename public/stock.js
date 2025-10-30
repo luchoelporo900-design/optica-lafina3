@@ -1,93 +1,77 @@
-// ===== util =====
-const $ = (q)=>document.querySelector(q);
-let ROLE = "guest";
+const $ = s => document.querySelector(s);
 
-// login rápido con prompt (o endpoint real si está)
-async function ensureAdmin(){
-  if(ROLE === "admin") return true;
-  const pass = prompt("Contraseña admin (tip: lafina123325):", "");
-  if(pass === null) return false;
-
-  try{
-    const resp = await fetch("/api/auth/admin", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ password: pass })
-    });
-    if(resp.ok){ ROLE = "admin"; return true; }
-  }catch(e){ /* ignore */ }
-
-  if(pass === "lafina123325"){ ROLE = "admin"; return true; }
-  alert("Contraseña incorrecta");
-  return false;
+// Mostrar/ocultar áreas
+function showAdminArea(show) {
+  $("#adminArea").style.display = show ? "block" : "none";
+  $("#loginBox").style.display = show ? "none" : "block";
 }
 
-// abrir selector de archivos
-$("#pickFile").onclick = async ()=>{
-  const ok = await ensureAdmin(); if(!ok) return;
-  $("#pFile").click();
+// Login
+$("#btnLogin").onclick = async () => {
+  const pw = $("#adminPass").value.trim();
+  $("#loginMsg").textContent = "";
+  const r = await fetch("/api/auth/admin", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: pw }),
+    credentials: "include" // <- envía/recibe cookie
+  });
+  if (r.ok) {
+    showAdminArea(true);
+  } else {
+    $("#loginMsg").textContent = "Contraseña incorrecta";
+  }
 };
 
-// subir archivo al servidor y completar URL
+// Al cargar, ver si ya hay sesión
+window.addEventListener("DOMContentLoaded", async ()=>{
+  const r = await fetch("/api/me", { credentials: "include" });
+  const data = await r.json();
+  showAdminArea(!!data.ok);
+});
+
+// Subir imagen (galería)
+$("#pickFile").onclick = ()=> $("#pFile").click();
+
 $("#pFile").onchange = async (e)=>{
   const file = e.target.files?.[0];
   if(!file) return;
-
-  const ok = await ensureAdmin(); if(!ok) return;
-
   const fd = new FormData();
   fd.append("image", file);
-
   const up = await fetch("/api/upload", {
     method: "POST",
-    headers: { "x-role": "admin" }, // requisito del backend
-    body: fd
+    body: fd,
+    credentials: "include"
   });
-
   const data = await up.json();
-  if(!data.ok){
-    alert(data.error || "No se pudo subir la imagen");
-    return;
-  }
-
-  // completa el campo URL y muestra preview
-  $("#pImage").value = data.url;                 // ej: /uploads/1698690000_foto.jpg
-  $("#preview").src = data.url;
-  $("#preview").style.display = "inline-block";
+  if(!data.ok){ alert(data.error || "No se pudo subir"); return; }
+  $("#pImage").value = data.url;
+  const prev = $("#preview");
+  prev.src = data.url; prev.style.display = "inline-block";
   alert("Imagen subida ✔");
 };
 
-// agregar producto
+// Agregar producto
 $("#addBtn").onclick = async ()=>{
-  const ok = await ensureAdmin(); if(!ok) return;
-
   const name = $("#pName").value.trim();
   const stock = Number($("#pStock").value || 0);
   const price = Number($("#pPrice").value || 0);
   const code = $("#pCode").value.trim();
   const category = $("#pCategory").value;
   const image = $("#pImage").value.trim();
-
   if(!name){ alert("Nombre requerido"); return; }
 
   const r = await fetch("/api/products", {
     method:"POST",
-    headers:{ "Content-Type":"application/json", "x-role":"admin" },
-    body: JSON.stringify({ name, stock, price, code, category, image })
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ name, stock, price, code, category, image }),
+    credentials: "include"
   });
-
   const data = await r.json();
   if(!data.ok){ alert(data.error || "No se pudo agregar"); return; }
 
-  // limpiar
-  $("#pName").value = "";
-  $("#pStock").value = "";
-  $("#pPrice").value = "";
-  $("#pCode").value = "";
-  $("#pCategory").value = "Recetado";
-  $("#pImage").value = "";
-  $("#pFile").value = "";
-  $("#preview").style.display = "none";
-
+  $("#pName").value=""; $("#pStock").value=""; $("#pPrice").value="";
+  $("#pCode").value=""; $("#pCategory").value="Recetado"; $("#pImage").value="";
+  $("#pFile").value=""; $("#preview").style.display="none";
   alert("Producto agregado ✔");
 };
