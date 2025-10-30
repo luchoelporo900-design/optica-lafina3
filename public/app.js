@@ -1,35 +1,35 @@
-console.log("La Fina Catalog v10");
+console.log("La Fina v11");
 
 const $ = (q)=>document.querySelector(q);
 const $$ = (q)=>Array.from(document.querySelectorAll(q));
 
-const WHATSAPP_PHONE = "5959XXXXXXXX"; // ← poné tu número (sin +)
+const WHATSAPP_PHONE = "5959XXXXXXXX"; // <-- tu número sin +
 let PRODUCTS = [];
 let FAVORITES = new Set();
 let CURRENT_CAT = "Todos";
+let ROLE = "guest"; // guest | admin
 
 function format(n){ return Number(n||0).toLocaleString("es-PY"); }
 function shortId(id){ return (id||"").slice(-6).toUpperCase(); }
 
-// Imagen por defecto si el producto no trae
+// ---------- CATALOGO ----------
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1523289333742-be1143f6b766?q=80&w=1200&auto=format&fit=crop";
 
 async function fetchJSON(url,opts={}){ const r = await fetch(url,opts); return r.json(); }
 
 async function loadProducts(){
   const data = await fetchJSON("/api/products");
-  // adaptamos al formato de tarjetas
   PRODUCTS = (data.products||[]).map(p=>({
     id: p.id,
     title: p.name,
     price: p.price,
     stock: p.stock,
-    // campos opcionales si más adelante los guardamos en la DB
     code: p.code || shortId(p.id),
     category: p.category || "Recetado",
     image: p.image || FALLBACK_IMG
   }));
   renderGrid();
+  if(ROLE==="admin"){ renderStockTable(); loadSales(); }
 }
 
 function renderGrid(){
@@ -93,11 +93,82 @@ function sendFavsWA(){
   window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${msg}`,"_blank");
 }
 
-function bindUI(){
-  // búsqueda
-  $("#q").addEventListener("input", renderGrid);
+// ---------- ADMIN UI ----------
+function setRole(role){
+  ROLE = role;
+  $$(".adminOnly").forEach(el => el.classList.toggle("hidden", role!=="admin"));
+}
 
-  // chips de categoría
+function setActiveTab(id){
+  $$(".tab").forEach(t=>t.classList.add("hidden"));
+  $$(".tabs button").forEach(b=>b.classList.remove("active"));
+  $(`#${id}`).classList.remove("hidden");
+  const btn = $(`.tabs button[data-tab="${id}"]`);
+  if(btn) btn.classList.add("active");
+}
+
+async function renderStockTable(){
+  const tbody = $("#stockTable tbody");
+  if(!tbody) return;
+  tbody.innerHTML = "";
+  PRODUCTS.forEach(p=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.title}</td>
+      <td>${p.stock}</td>
+      <td>${format(p.price)}</td>
+      <td>
+        <button class="btn" data-act="edit" data-id="${p.id}">Editar</button>
+        <button class="btn" data-act="del" data-id="${p.id}">Borrar</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.onclick = async (e)=>{
+    const btn = e.target.closest("button"); if(!btn) return;
+    const id = btn.dataset.id;
+    if(btn.dataset.act==="del"){
+      if(!confirm("¿Borrar producto?")) return;
+      await fetch(`/api/products/${id}`, { method:"DELETE", headers:{ "x-role":"admin" }});
+      await loadProducts();
+    }else{
+      const p = PRODUCTS.find(x=>x.id===id);
+      const name = prompt("Nombre:", p.title); if(name===null) return;
+      const stock = prompt("Stock:", p.stock); if(stock===null) return;
+      const price = prompt("Precio:", p.price); if(price===null) return;
+      await fetch(`/api/products/${id}`, {
+        method:"PUT",
+        headers:{ "Content-Type":"application/json", "x-role":"admin" },
+        body: JSON.stringify({ name, stock:Number(stock), price:Number(price) })
+      });
+      await loadProducts();
+    }
+  };
+}
+
+async function loadSales(){
+  const data = await fetchJSON("/api/sales");
+  const tbody = $("#salesTable tbody");
+  if(!tbody) return;
+  tbody.innerHTML = "";
+  (data.sales||[]).slice().reverse().forEach(s=>{
+    const detail = s.items.map(i=>`${i.qty}× ${i.name}`).join(", ");
+    const tr = document.createElement("tr");
+    const date = new Date(s.date);
+    tr.innerHTML = `<td>${date.toLocaleString()}</td><td>${detail}</td><td>${format(s.total||0)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- BIND UI ----------
+function bindUI(){
+  // Tabs
+  $$(".tabs button").forEach(btn=>{
+    btn.onclick = ()=> setActiveTab(btn.dataset.tab);
+  });
+
+  // Catálogo
+  $("#q").addEventListener("input", renderGrid);
   $("#chips").addEventListener("click", (e)=>{
     const chip = e.target.closest(".chip"); if(!chip) return;
     $$(".chip").forEach(c=>c.classList.remove("active"));
@@ -105,36 +176,35 @@ function bindUI(){
     CURRENT_CAT = chip.dataset.cat;
     renderGrid();
   });
-
-  // favoritos -> whatsapp
   $("#waFavs").onclick = sendFavsWA;
 
-  // admin modal
+  // Modal admin
   $("#adminLink").onclick = ()=> $("#loginModal").classList.remove("hidden");
   $("#adminCancel").onclick = ()=> $("#loginModal").classList.add("hidden");
+
+  // Login real contra backend
   $("#adminEnter").onclick = async ()=>{
-    const password = $("#adminPass").value;
+    const password = $("#adminPass").value.trim();
     const res = await fetch("/api/auth/admin", {
-      method:"POST", headers:{ "Content-Type":"application/json" },
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ password })
     });
-    if(res.ok){ location.href = "/stock"; } // simple redirección (o podemos mostrar pestañas)
-    else alert("Contraseña incorrecta");
+    if(res.ok){
+      setRole("admin");
+      $("#loginModal").classList.add("hidden");
+      setActiveTab("stock");
+      renderStockTable();
+      loadSales();
+    }else{
+      alert("Contraseña incorrecta");
+    }
   };
 }
 
 window.addEventListener("DOMContentLoaded", async ()=>{
   bindUI();
-  await loadProducts();// --- LOGIN LOCAL SIMPLIFICADO ---
-$("#adminEnter").onclick = ()=>{
-  const pass = $("#adminPass").value.trim();
-  if(pass === "lafina123325"){
-    alert("Acceso administrador correcto ✅");
-    $("#loginModal").classList.add("hidden");
-    window.location.href = "/stock"; // o cambiar por /admin.html si lo tenés
-  } else {
-    alert("Contraseña incorrecta ❌");
-  }
-};
-
+  setRole("guest");
+  setActiveTab("catalogo");
+  await loadProducts();
 });
