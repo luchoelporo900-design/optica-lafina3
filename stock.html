@@ -1,85 +1,15 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin — Óptica La Fina</title>
-  <link rel="icon" href="optica_lafina.png" />
-  <style>
-    :root{--gold:#C59D5F;--bg:#0f0f10;--card:#151518;--stroke:#2a2b2f;--text:#e9e9ea}
-    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    body{margin:0;background:var(--bg);color:var(--text)}
-    header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:2px solid var(--gold)}
-    .brand{display:flex;align-items:center;gap:10px;color:var(--gold);font-weight:800}
-    .logo{width:36px;height:36px;border-radius:50%;border:1px solid var(--gold)}
-    main{max-width:1100px;margin:16px auto;padding:0 14px}
-    .card{background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:14px;margin-bottom:16px}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-bottom:1px solid var(--stroke);text-align:left}
-    th{color:#bdbdbf}
-    input,select{padding:10px;border:1px solid var(--stroke);border-radius:10px;background:#0b0b0c;color:var(--text)}
-    button{padding:10px 12px;border:none;border-radius:10px;background:#222;color:#eee;cursor:pointer}
-    .gold{background:var(--gold);color:#111;font-weight:700}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    .badge{padding:6px 10px;border-radius:999px;border:1px solid var(--gold);color:var(--gold);font-size:12px}
-    .right{display:flex;gap:8px;align-items:center}
-    .muted{color:#bdbdbf;font-size:14px}
-    /* Modal */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center}
-    .hidden{display:none}
-    .modal .card{max-width:380px;width:92%}
-  </style>
-</head>
-<body>
-  <header>
-    <div class="brand"><img src="optica_lafina.png" class="logo" alt=""> Admin — Óptica La Fina</div>
-    <div class="right">
-      <span id="status" class="badge">Invitado</span>
-      <a href="/" class="badge">Ir al catálogo</a>
-    </div>
-  </header>
-
-  <main>
-    <div class="card">
-      <h2 style="margin:0 0 8px">Stock</h2>
-      <div class="muted" style="margin-bottom:10px">Editar, borrar o agregar productos. Campos nuevos: <b>Código, Categoría, Imagen (URL)</b>.</div>
-      <table id="stockTable">
-        <thead>
-          <tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Código</th><th>Categoría</th><th>Imagen</th><th>Acciones</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h3 style="margin-top:0">Agregar producto</h3>
-      <div class="row">
-        <input id="pName" placeholder="Nombre" />
-        <input id="pStock" type="number" placeholder="Stock" />
-        <input id="pPrice" type="number" placeholder="Precio" />
-        <input id="pCode" placeholder="Código (opcional)" />
-        <select id="pCategory">
-          <option>Recetado</option><option>Sol</option><option>Hombre</option><option>Mujer</option>
-          <option>Niños</option><option>Metal</option><option>Acetato</option><option>Titanio</option>
-        </select>
-        <input id="pImage" placeholder="URL de imagen (opcional)" style="min-width:260px" />
-        <button id="addBtn" class="gold">Agregar</button>
-      </div>
-    </div>
-  </main>
-
-  <!-- Modal de login -->
-  <div id="loginModal" class="modal">
-    <div class="card">
-      <h3 style="margin-top:0">Acceso administrador</h3>
-      <input type="password" id="adminPass" placeholder="Contraseña admin" style="width:100%;margin-bottom:10px" />
-      <div class="row">
-        <button id="adminEnter" class="gold">Entrar</button>
-      </div>
-      <div class="muted">Clave por defecto: <code>lafina123325</code></div>
-    </div>
-  </div>
-
-  <script src="stock.js?v=1"></script>
-</body>
-</html>
+<h3>Agregar producto</h3>
+<div class="row">
+  <input id="pName" placeholder="Nombre" />
+  <input id="pStock" type="number" placeholder="Stock" />
+  <input id="pPrice" type="number" placeholder="Precio" />
+  <input id="pCode" placeholder="Código (opcional)" />
+  <select id="pCategory">
+    <option>Recetado</option><option>Sol</option><option>Hombre</option><option>Mujer</option>
+    <option>Niños</option><option>Metal</option><option>Acetato</option><option>Titanio</option>
+  </select>
+  <input id="pImage" placeholder="URL de imagen (opcional)" style="min-width:260px" />
+  <input id="pFile" type="file" accept="image/*" style="display:none" />
+  <button id="pickFile" class="gold">Subir imagen</button>
+  <button id="addBtn" class="gold">Agregar</button>
+</div>
