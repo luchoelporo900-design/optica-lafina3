@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Óptica La Fina</title>
   <link rel="icon" href="optica_lafina.png" />
-  <link rel="stylesheet" href="styles.css?v=10" />
+  <link rel="stylesheet" href="styles.css?v=11" />
 </head>
 <body class="theme-dark">
   <header class="topbar">
@@ -13,35 +13,71 @@
       <img src="optica_lafina.png" class="logo" alt="La Fina">
       <strong>ÓPTICA LA FINA</strong>
     </div>
+    <nav class="tabs">
+      <button data-tab="catalogo" class="active">Catálogo</button>
+      <button data-tab="stock" class="adminOnly hidden">Stock</button>
+      <button data-tab="ventas" class="adminOnly hidden">Ventas</button>
+    </nav>
     <div class="spacer"></div>
-    <a id="adminLink" class="admin-link">Subir productos (Admin)</a>
+    <a id="adminLink" class="admin-link">Entrar (Admin)</a>
   </header>
 
   <main class="container">
-    <h1 class="title">Catálogo de Lentes</h1>
-    <p class="subtitle">Elegí tus modelos favoritos y mandanos tu pedido por WhatsApp.</p>
+    <!-- CATÁLOGO -->
+    <section id="catalogo" class="tab">
+      <h1 class="title">Catálogo de Lentes</h1>
+      <p class="subtitle">Elegí tus modelos favoritos y mandanos tu pedido por WhatsApp.</p>
 
-    <div class="toolbar">
-      <input id="q" class="search" placeholder="Buscar por nombre o código...">
-      <div class="chips" id="chips">
-        <button class="chip active" data-cat="Todos">Todos</button>
-        <button class="chip" data-cat="Hombre">Hombre</button>
-        <button class="chip" data-cat="Mujer">Mujer</button>
-        <button class="chip" data-cat="Niños">Niños</button>
-        <button class="chip" data-cat="Sol">Sol</button>
-        <button class="chip" data-cat="Recetado">Recetado</button>
-        <button class="chip" data-cat="Metal">Metal</button>
-        <button class="chip" data-cat="Acetato">Acetato</button>
-        <button class="chip" data-cat="Titanio">Titanio</button>
+      <div class="toolbar">
+        <input id="q" class="search" placeholder="Buscar por nombre o código...">
+        <div class="chips" id="chips">
+          <button class="chip active" data-cat="Todos">Todos</button>
+          <button class="chip" data-cat="Hombre">Hombre</button>
+          <button class="chip" data-cat="Mujer">Mujer</button>
+          <button class="chip" data-cat="Niños">Niños</button>
+          <button class="chip" data-cat="Sol">Sol</button>
+          <button class="chip" data-cat="Recetado">Recetado</button>
+          <button class="chip" data-cat="Metal">Metal</button>
+          <button class="chip" data-cat="Acetato">Acetato</button>
+          <button class="chip" data-cat="Titanio">Titanio</button>
+        </div>
       </div>
-    </div>
 
-    <div id="grid" class="grid"></div>
+      <div id="grid" class="grid"></div>
 
-    <div class="favbar">
-      <span>❤ <span id="favCount">0</span> item(s) en favoritos</span>
-      <button id="waFavs" class="btn btn-gold">Enviar por WhatsApp</button>
-    </div>
+      <div class="favbar">
+        <span>❤ <span id="favCount">0</span> item(s) en favoritos</span>
+        <button id="waFavs" class="btn btn-gold">Enviar por WhatsApp</button>
+      </div>
+    </section>
+
+    <!-- STOCK (solo admin) -->
+    <section id="stock" class="tab hidden">
+      <div class="card" style="padding:16px">
+        <h2 style="margin-top:0">Stock</h2>
+        <table id="stockTable" class="table">
+          <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Acciones</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <hr/>
+        <h3>Agregar producto</h3>
+        <input id="pName" placeholder="Nombre" />
+        <input id="pStock" type="number" placeholder="Stock" />
+        <input id="pPrice" type="number" placeholder="Precio" />
+        <button id="addBtn" class="btn btn-gold">Agregar</button>
+      </div>
+    </section>
+
+    <!-- VENTAS (solo admin) -->
+    <section id="ventas" class="tab hidden">
+      <div class="card" style="padding:16px">
+        <h2 style="margin-top:0">Ventas</h2>
+        <table id="salesTable" class="table">
+          <thead><tr><th>Fecha</th><th>Detalle</th><th>Total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <!-- Modal Admin -->
@@ -57,7 +93,7 @@
     </div>
   </div>
 
-  <footer class="footer">Óptica La Fina — Santaní / PV</footer>
-  <script src="app.js?v=10"></script>
+  <footer class="footer">© Óptica La Fina</footer>
+  <script src="app.js?v=11"></script>
 </body>
 </html>
