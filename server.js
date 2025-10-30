@@ -1,89 +1,94 @@
+// ===== Imports ÚNICOS =====
 import express from "express";
 import cors from "cors";
-import { Low } from "lowdb";
-import { JSONFile } from "lowdb/node";
-import { nanoid } from "nanoid";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import multer from "multer";
+import { Low } from "lowdb";
+import { JSONFile } from "lowdb/node";
+import { nanoid } from "nanoid";
 
+// ===== Paths base =====
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const name = `${Date.now()}_${safe}`;
-    cb(null, name);
-  }
-});
-const upload = multer({ storage });
 
-// servir estáticos de /uploads
-app.use("/uploads", express.static(uploadsDir));
-
+// ===== App =====
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+
+// Anti-cache para frontend (evita que el navegador te muestre viejo)
 app.use((req, res, next) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
   next();
 });
-app.use(express.static(path.join(__dirname, "public"), { etag:false, lastModified:false, maxAge:0 }));
-app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "lafina123325";
-
+// ===== LowDB =====
 const dbFile = path.join(__dirname, "db.json");
 const adapter = new JSONFile(dbFile);
-const db = new Low(adapter, { users: [], products: [], sales: [] });
-
+const db = new Low(adapter, { products: [], sales: [] });
 await db.read();
-db.data ||= { users: [], products: [], sales: [] };
+db.data ||= { products: [], sales: [] };
+if (!Array.isArray(db.data.products)) db.data.products = [];
+if (!Array.isArray(db.data.sales)) db.data.sales = [];
+await db.write();
 
-if (db.data.products.length === 0) {
-  db.data.products.push(
-    { id: nanoid(), name: "Lente CR-39 1.50", stock: 20, price: 90000 },
-    { id: nanoid(), name: "Lente Policarbonato 1.59", stock: 15, price: 140000 },
-    { id: nanoid(), name: "Marco básico", stock: 30, price: 120000 }
-  );
-  await db.write();
-}
-
-app.post("/api/auth/guest", (req, res) => {
-  res.json({ ok: true, role: "guest" });
-});
-
+// ===== Auth (simple) =====
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "lafina123325";
 app.post("/api/auth/admin", (req, res) => {
   const { password } = req.body || {};
   if (password === ADMIN_PASSWORD) return res.json({ ok: true, role: "admin" });
   return res.status(401).json({ ok: false, error: "Contraseña incorrecta" });
 });
+const requireAdmin = (req, res, next) =>
+  req.header("x-role") === "admin" ? next() : res.status(403).json({ ok: false, error: "Solo admin." });
 
-function requireAdmin(req, res, next) {
-  const role = req.header("x-role");
-  if (role === "admin") return next();
-  return res.status(403).json({ ok: false, error: "Solo admin." });
-}
+// ===== Uploads (galería) =====
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    cb(null, `${Date.now()}_${safe}`);
+  }
+});
+const upload = multer({ storage });
+app.use("/uploads", express.static(uploadsDir));
 
-// SUBIR IMAGEN (form-data: image)
-app.post("/api/upload", requireAdmin, upload.single("image"), (req, res) => {
-  if (!req.file) return res.status(400).json({ ok: false, error: "Archivo faltante" });
-  const publicUrl = `/uploads/${req.file.filename}`;
-  res.json({ ok: true, url: publicUrl });
+// ===== Productos API =====
+app.get("/api/products", async (_req, res) => {
+  await db.read();
+  // defaults por si hay datos viejos
+  db.data.products = (db.data.products || []).map(p => ({
+    id: p.id || nanoid(),
+    name: p.name,
+    stock: Number(p.stock) || 0,
+    price: Number(p.price) || 0,
+    code: p.code || "",
+    category: p.category || "Recetado",
+    image: p.image || ""
+  }));
+  await db.write();
+  res.json({ ok: true, products: db.data.products });
 });
 
-
 app.post("/api/products", requireAdmin, async (req, res) => {
-  const { name, stock, price } = req.body || {};
+  const { name, stock, price, code, category, image } = req.body || {};
   if (!name) return res.status(400).json({ ok: false, error: "Falta nombre" });
-  const item = { id: nanoid(), name, stock: Number(stock) || 0, price: Number(price) || 0 };
   await db.read();
+  const item = {
+    id: nanoid(),
+    name,
+    stock: Number(stock) || 0,
+    price: Number(price) || 0,
+    code: (code || "").trim(),
+    category: (category || "Recetado").trim(),
+    image: (image || "").trim()
+  };
   db.data.products.push(item);
   await db.write();
   res.json({ ok: true, item });
@@ -91,58 +96,39 @@ app.post("/api/products", requireAdmin, async (req, res) => {
 
 app.put("/api/products/:id", requireAdmin, async (req, res) => {
   const { id } = req.params;
-  const { name, stock, price } = req.body || {};
+  const { name, stock, price, code, category, image } = req.body || {};
   await db.read();
-  const idx = db.data.products.findIndex(p => p.id === id);
-  if (idx === -1) return res.status(404).json({ ok: false, error: "No existe" });
-  if (name !== undefined) db.data.products[idx].name = name;
-  if (stock !== undefined) db.data.products[idx].stock = Number(stock);
-  if (price !== undefined) db.data.products[idx].price = Number(price);
+  const p = db.data.products.find(x => x.id === id);
+  if (!p) return res.status(404).json({ ok: false, error: "No existe" });
+  if (name !== undefined) p.name = name;
+  if (stock !== undefined) p.stock = Number(stock);
+  if (price !== undefined) p.price = Number(price);
+  if (code !== undefined) p.code = (code || "").trim();
+  if (category !== undefined) p.category = (category || "").trim();
+  if (image !== undefined) p.image = (image || "").trim();
   await db.write();
-  res.json({ ok: true, item: db.data.products[idx] });
+  res.json({ ok: true, item: p });
 });
 
 app.delete("/api/products/:id", requireAdmin, async (req, res) => {
   const { id } = req.params;
   await db.read();
-  const prev = db.data.products.length;
+  const before = db.data.products.length;
   db.data.products = db.data.products.filter(p => p.id !== id);
   await db.write();
-  res.json({ ok: true, deleted: prev - db.data.products.length });
+  res.json({ ok: true, deleted: before - db.data.products.length });
 });
 
-app.get("/api/sales", async (req, res) => {
-  await db.read();
-  res.json({ ok: true, sales: db.data.sales });
+// ===== Upload endpoint =====
+app.post("/api/upload", requireAdmin, upload.single("image"), (req, res) => {
+  if (!req.file) return res.status(400).json({ ok: false, error: "Archivo faltante" });
+  res.json({ ok: true, url: `/uploads/${req.file.filename}` });
 });
 
-app.post("/api/sales", async (req, res) => {
-  const { items } = req.body || {};
-  if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ ok: false, error: "Items vacíos" });
-  }
-  await db.read();
-  const sale = { id: nanoid(), date: new Date().toISOString(), items: [] , total: 0 };
-  for (const it of items) {
-    const p = db.data.products.find(x => x.id === it.productId);
-    if (!p) return res.status(400).json({ ok: false, error: "Producto inválido" });
-    const qty = Number(it.qty) || 1;
-    if (p.stock < qty) return res.status(400).json({ ok: false, error: `Stock insuficiente de ${p.name}` });
-    p.stock -= qty;
-    const lineTotal = p.price * qty;
-    sale.items.push({ productId: p.id, name: p.name, qty, price: p.price, lineTotal });
-    sale.total += lineTotal;
-  }
-  db.data.sales.push(sale);
-  await db.write();
-  res.json({ ok: true, sale });
-});
+// ===== Estáticos =====
+app.use(express.static(path.join(__dirname, "public"), { etag: false, lastModified: false, maxAge: 0 }));
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-app.use(require("express").static(new URL("./public", import.meta.url).pathname));
-import fs from "fs";
-app.get("*", (_req, res) => res.sendFile(new URL("./public/index.html", import.meta.url).pathname));
+// ===== Start =====
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`La Fina corriendo en :${PORT}`));
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Óptica La Fina corriendo en http://localhost:${PORT}`));
