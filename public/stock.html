@@ -1,95 +1,152 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Administración | Óptica La Fina</title>
-  <link rel="icon" href="logo.png">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — Óptica La Fina</title>
+  <link rel="icon" href="logo.png" />
   <style>
-    body {
-      background-color: #000;
-      color: #f5f5f5;
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #111;
-      border-bottom: 2px solid #c59d5f;
-      padding: 10px;
-    }
-    header img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      border: 2px solid #c59d5f;
-      margin-right: 15px;
-      object-fit: cover;
-    }
-    header h1 {
-      color: #c59d5f;
-      font-weight: 700;
-    }
-    form {
-      margin: 30px auto;
-      max-width: 700px;
-      background: #111;
-      padding: 20px;
-      border-radius: 12px;
-      border: 1px solid #c59d5f;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    input, select {
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #c59d5f;
-      background: #222;
-      color: #f5f5f5;
-    }
-    button {
-      background-color: #c59d5f;
-      border: none;
-      color: #000;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    button:hover {
-      background-color: #f5c678;
-    }
+    :root{--gold:#C59D5F;--bg:#0e0e10;--panel:#151517;--stroke:#29292d;--text:#f4f4f4;--muted:#b8b8bc;}
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Roboto,Arial}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#111;border-bottom:2px solid var(--gold)}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+    .brand img{width:48px;height:48px;border-radius:50%;border:2px solid var(--gold);object-fit:cover}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .card{background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:16px;margin-bottom:16px}
+    input,select,button{padding:10px;border-radius:8px;border:1px solid var(--stroke);background:#0b0b0d;color:var(--text)}
+    button{cursor:pointer;background:var(--gold);color:#111;border-color:var(--gold);font-weight:700}
+    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .muted{color:var(--muted)}
+    #adminArea{display:none}
+    .preview{display:none;width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--stroke)}
   </style>
 </head>
 <body>
 
-  <header>
+<header class="topbar">
+  <a href="/" class="brand">
     <img src="logo.png" alt="Óptica La Fina">
-    <h1>Panel de Administración</h1>
-  </header>
+    <strong>ÓPTICA LA FINA — ADMIN</strong>
+  </a>
+  <button id="btnLogout" style="display:none">Cerrar sesión</button>
+</header>
 
-  <form id="formulario">
-    <input type="text" id="nombre" placeholder="Nombre del producto" required>
-    <input type="number" id="stock" placeholder="Stock" required>
-    <input type="number" id="precio" placeholder="Precio" required>
-    <input type="text" id="codigo" placeholder="Código (opcional)">
-    <select id="categoria">
-      <option value="Recetado">Recetado</option>
-      <option value="Sol">Sol</option>
-      <option value="Niños">Niños</option>
-      <option value="Mujer">Mujer</option>
-      <option value="Hombre">Hombre</option>
-    </select>
-    <input type="file" id="imagen" accept="image/*">
-    <button type="submit">Subir Producto</button>
-  </form>
+<div class="wrap">
+  <!-- Login -->
+  <div id="loginBox" class="card">
+    <h3>Acceso administrador</h3>
+    <div class="row">
+      <input id="adminPass" type="password" placeholder="Contraseña de admin" style="min-width:220px">
+      <button id="btnLogin">Entrar</button>
+      <span id="loginMsg" class="muted"></span>
+    </div>
+    <div class="muted" style="margin-top:6px">Se guarda en una sesión segura.</div>
+  </div>
 
-  <script src="stock.js"></script>
+  <!-- Área admin -->
+  <div id="adminArea">
+    <div class="card">
+      <h2 style="margin:0 0 8px 0">Agregar producto</h2>
+      <div class="row">
+        <input id="pName" placeholder="Nombre">
+        <input id="pStock" type="number" placeholder="Stock">
+        <input id="pPrice" type="number" placeholder="Precio">
+        <input id="pCode" placeholder="Código (opcional)">
+        <select id="pCategory">
+          <option>Recetado</option><option>Sol</option>
+          <option>Hombre</option><option>Mujer</option><option>Niños</option>
+          <option>Metal</option><option>Acetato</option><option>Titanio</option>
+        </select>
+        <input id="pImage" placeholder="URL de imagen (opcional)" style="min-width:260px">
+        <input id="pFile" type="file" accept="image/*" style="display:none">
+        <button id="pickFile">Subir imagen</button>
+        <img id="preview" class="preview" alt="preview">
+        <button id="addBtn">Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const showAdmin = (ok)=>{
+    $("#adminArea").style.display = ok ? "block" : "none";
+    $("#loginBox").style.display = ok ? "none" : "block";
+    $("#btnLogout").style.display = ok ? "inline-block" : "none";
+  };
+
+  // Al cargar, preguntar si ya hay sesión
+  window.addEventListener("DOMContentLoaded", async ()=>{
+    try{
+      const r = await fetch("/api/me",{credentials:"include"});
+      const d = await r.json();
+      showAdmin(!!d.ok);
+    }catch{ showAdmin(false); }
+  });
+
+  // Login
+  $("#btnLogin").onclick = async ()=>{
+    $("#loginMsg").textContent = "";
+    const pw = $("#adminPass").value.trim();
+    const r = await fetch("/api/auth/admin",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({password:pw}),
+      credentials:"include"
+    });
+    if(r.ok){ showAdmin(true); }
+    else { $("#loginMsg").textContent = "Contraseña incorrecta"; }
+  };
+
+  // Logout
+  $("#btnLogout").onclick = async ()=>{
+    await fetch("/api/logout",{method:"POST",credentials:"include"});
+    showAdmin(false);
+  };
+
+  // Subir imagen a /api/upload
+  $("#pickFile").onclick = ()=> $("#pFile").click();
+  $("#pFile").onchange = async (e)=>{
+    const file = e.target.files?.[0];
+    if(!file) return;
+    const fd = new FormData();
+    fd.append("image", file);
+    const up = await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
+    const data = await up.json();
+    if(!data.ok){ alert(data.error||"No se pudo subir"); return; }
+    $("#pImage").value = data.url;
+    $("#preview").src = data.url;
+    $("#preview").style.display = "inline-block";
+    alert("Imagen subida ✔");
+  };
+
+  // Agregar producto
+  $("#addBtn").onclick = async ()=>{
+    const payload = {
+      name: $("#pName").value.trim(),
+      stock: Number($("#pStock").value||0),
+      price: Number($("#pPrice").value||0),
+      code: $("#pCode").value.trim(),
+      category: $("#pCategory").value,
+      image: $("#pImage").value.trim()
+    };
+    if(!payload.name){ alert("Nombre requerido"); return; }
+
+    const r = await fetch("/api/products",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload),
+      credentials:"include"
+    });
+    const data = await r.json();
+    if(!data.ok){ alert(data.error||"No se pudo agregar"); return; }
+
+    // limpiar
+    ["#pName","#pStock","#pPrice","#pCode","#pImage"].forEach(s=>$(s).value="");
+    $("#preview").style.display="none";
+    alert("Producto agregado ✔");
+  };
+</script>
 </body>
 </html>
