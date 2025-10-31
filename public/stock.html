@@ -5,101 +5,79 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ÓPTICA LA FINA — ADMIN</title>
 
-  <!-- Estilos mínimos (negro/dorado) -->
   <style>
     :root{
       --bg:#0b0b0c; --panel:#131316; --text:#e9e9ea; --muted:#b8b8bd;
-      --gold:#e0b84f; --gold-strong:#f0c64f; --gold-dim:#b99236;
-      --line:linear-gradient(90deg,#f0c64f,#b99236);
+      --gold:#e0b84f; --gold-dark:#b99236;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
-    .wrap{max-width:980px;margin:0 auto;padding:18px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
-    .brand img{width:28px;height:28px;border-radius:50%;background:#000;object-fit:cover}
-    .brand span{opacity:.9}
-    .line{height:2px;background:var(--line);border-radius:2px;margin:6px 0 18px}
-    h1{font-size:28px;letter-spacing:.5px;margin:10px 0 4px}
-    .panel{background:var(--panel);border:1px solid #24242a;border-radius:14px;padding:18px}
-    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-    input,select{background:#0f0f12;border:1px solid #2a2a31;color:var(--text);
-      padding:10px 12px;border-radius:10px;outline:none;min-width:140px}
-    input:focus,select:focus{border-color:var(--gold)}
-    .input-w{position:relative;display:inline-flex;align-items:center}
-    .eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);
-      font-size:14px;padding:4px 8px;border:1px solid #3a3a40;border-radius:8px;background:#0c0c10;cursor:pointer}
-    .btn{border:1px solid #2a2a31;background:#16161b;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Inter,Arial}
+    .wrap{max-width:960px;margin:auto;padding:20px}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand img{width:28px;height:28px;border-radius:50%}
+    .line{height:2px;background:linear-gradient(90deg,var(--gold),var(--gold-dark));border-radius:2px;margin:10px 0 25px}
+    h1{font-size:26px;margin:8px 0 16px;color:var(--gold)}
+    .panel{background:#151515;border:1px solid #333;border-radius:14px;padding:20px}
+    input,select{background:#0e0e10;border:1px solid #333;color:#fff;border-radius:8px;padding:10px;margin:4px;outline:none}
+    input:focus{border-color:var(--gold)}
+    .btn{background:var(--gold);border:none;border-radius:8px;padding:10px 16px;color:#000;font-weight:bold;cursor:pointer}
     .btn:hover{filter:brightness(1.08)}
-    .btn.gold{background:var(--gold);border-color:#a2771a;color:#191919;font-weight:700}
-    .btn.ghost{background:transparent;border-color:#3a3a40;color:#d8d8db}
+    .btn-sec{background:none;border:1px solid var(--gold);color:var(--gold)}
     .muted{color:var(--muted);font-size:13px}
-    .hint{font-size:12px;color:#9ca3af;margin-top:8px}
-    .footer{margin-top:22px;text-align:center;color:#cfcfd6;font-size:14px;opacity:.9}
-    .success{color:#8ff29b}
-    .error{color:#ff8c8c}
-    @media (max-width:640px){
-      header{flex-direction:column;align-items:flex-start}
-      .row{gap:8px}
-      input,select{min-width:120px}
-    }
+    .footer{text-align:center;margin-top:30px;color:#ccc;font-size:14px}
+    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#aaa;cursor:pointer}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="brand">
-        <img src="/public/logo.png" alt="Óptica La Fina" />
-        <span>ÓPTICA LA FINA — <b>ADMIN</b></span>
+        <img src="/public/logo.png" alt="Óptica La Fina">
+        <strong>ÓPTICA LA FINA — ADMIN</strong>
       </div>
-      <div class="row">
-        <a class="btn ghost" href="/index.html">Volver al catálogo</a>
-      </div>
+      <a href="/index.html" class="btn-sec">Volver al catálogo</a>
     </header>
 
     <div class="line"></div>
 
     <h1>Acceso administrador</h1>
 
-    <!-- LOGIN -->
-    <div id="loginBox" class="panel" style="margin:10px 0 18px;display:none">
-      <div class="row">
-        <div class="input-w">
-          <input id="adminPass" type="password" placeholder="Contraseña admin"
-                 autocomplete="off" autocorrect="off" autocapitalize="off" inputmode="text"
-                 style="width:260px;padding-right:46px" />
-          <button id="togglePw" class="eye" aria-label="Mostrar u ocultar contraseña">👁️</button>
-        </div>
-        <button id="btnLogin" class="btn gold">Entrar</button>
-        <span id="loginMsg" class="muted"></span>
+    <!-- Login -->
+    <div id="loginBox" class="panel">
+      <div style="position:relative;display:inline-block">
+        <input id="adminPass" type="password" placeholder="Contraseña" autocomplete="off" style="padding-right:38px;width:250px">
+        <button id="togglePw" class="eye">👁️</button>
       </div>
-      <div class="hint">Consejo: no compartas la pantalla mientras escribís la contraseña.</div>
+      <button id="btnLogin" class="btn">Entrar</button>
+      <div id="loginMsg" class="muted"></div>
     </div>
 
-    <!-- PANEL ADMIN (se muestra tras login) -->
-    <div id="adminBox" class="panel" style="display:none">
+    <!-- Panel -->
+    <div id="adminBox" class="panel" style="display:none;margin-top:18px">
       <div class="row" style="justify-content:space-between;margin-bottom:8px">
-        <div class="muted">Agregar producto</div>
-        <button id="btnLogout" class="btn ghost">Cerrar sesión</button>
+        <b>Agregar producto</b>
+        <button id="btnLogout" class="btn-sec">Cerrar sesión</button>
       </div>
 
-      <div class="row" style="margin-bottom:10px">
-        <input id="pName"  placeholder="Nombre" />
-        <input id="pStock" placeholder="Stock" inputmode="numeric" />
-        <input id="pPrice" placeholder="Precio" inputmode="numeric" />
-        <input id="pCode"  placeholder="Código (opcional)" />
-        <select id="pCategory" aria-label="Categoría">
+      <div class="row">
+        <input id="pName" placeholder="Nombre">
+        <input id="pStock" placeholder="Stock" inputmode="numeric">
+        <input id="pPrice" placeholder="Precio" inputmode="numeric">
+        <input id="pCode" placeholder="Código (opcional)">
+        <select id="pCategory">
           <option>Recetado</option><option>Sol</option><option>Metal</option>
-          <option>Acetato</option><option>Titanio</option>
-          <option>Hombre</option><option>Mujer</option><option>Niños</option>
+          <option>Acetato</option><option>Titanio</option><option>Hombre</option>
+          <option>Mujer</option><option>Niños</option>
         </select>
       </div>
 
-      <div class="row" style="margin-bottom:8px">
-        <input id="pImage" placeholder="URL de imagen (opcional)" style="flex:1;min-width:260px" />
-        <input id="pickFile" type="file" accept="image/*" hidden />
-        <button id="btnPick" class="btn">Subir imagen</button>
-        <button id="btnAdd"  class="btn gold">Agregar</button>
+      <div class="row">
+        <input id="pImage" placeholder="URL de imagen (opcional)" style="flex:1">
+        <input id="pickFile" type="file" accept="image/*" hidden>
+        <button id="btnPick" class="btn-sec">Subir imagen</button>
+        <button id="btnAdd" class="btn">Agregar</button>
       </div>
       <div id="msg" class="muted"></div>
     </div>
@@ -108,136 +86,80 @@
   </div>
 
   <script>
-    // Helpers
-    const q  = s => document.querySelector(s);
-    const qs = s => Array.from(document.querySelectorAll(s));
+    const q = s => document.querySelector(s);
     const passInput = q('#adminPass');
-    const togglePw  = q('#togglePw');
+    const togglePw = q('#togglePw');
 
-    function showLogin(show){ q('#loginBox').style.display = show ? 'block' : 'none'; }
-    function showAdmin(show){ q('#adminBox').style.display = show ? 'block' : 'none'; }
-    function note(el, text, ok){
-      el.textContent = text || '';
-      el.className = ok === undefined ? 'muted' : ok ? 'success' : 'error';
-    }
+    togglePw.onclick = () => {
+      const isText = passInput.type === 'text';
+      passInput.type = isText ? 'password' : 'text';
+      togglePw.textContent = isText ? '👁️' : '🙈';
+    };
 
-    // Mostrar/ocultar contraseña
-    togglePw.addEventListener('click', () => {
-      const showing = passInput.type === 'text';
-      passInput.type = showing ? 'password' : 'text';
-      togglePw.textContent = showing ? '👁️' : '🙈';
-      passInput.focus();
-    });
+    const showLogin = show => q('#loginBox').style.display = show ? 'block' : 'none';
+    const showAdmin = show => q('#adminBox').style.display = show ? 'block' : 'none';
+    const note = (el, t, ok) => { el.textContent = t; el.style.color = ok ? '#8f8' : '#f88'; };
 
-    // Evitar submit por Enter que pueda filtrar la clave en URL
-    document.addEventListener('submit', e => e.preventDefault());
-
-    // Chequear sesión al cargar
     async function checkMe(){
       try{
-        const r = await fetch('/api/me', {credentials:'include'});
+        const r = await fetch('/api/me',{credentials:'include'});
         const d = await r.json();
-        if(r.ok && d && d.auth){
-          showLogin(false); showAdmin(true);
-        }else{
-          showAdmin(false); showLogin(true);
-        }
-      }catch{
-        showAdmin(false); showLogin(true);
-      }
+        if(r.ok && d.auth){ showLogin(false); showAdmin(true); }
+        else{ showLogin(true); showAdmin(false); }
+      }catch{ showLogin(true); showAdmin(false); }
     }
 
-    // Login
-    q('#btnLogin').addEventListener('click', async ()=>{
-      note(q('#loginMsg'), '');
-      const pw = passInput.value;
+    q('#btnLogin').onclick = async ()=>{
+      const pw = passInput.value.trim();
+      passInput.value = '';
       try{
-        const r = await fetch('/api/auth/admin', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          credentials:'include',
-          body: JSON.stringify({password: pw})
+        const r = await fetch('/api/auth/admin',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          credentials:'include',body:JSON.stringify({password:pw})
         });
-        // Limpiar SIEMPRE
-        passInput.value = '';
-        passInput.type = 'password';
-        togglePw.textContent = '👁️';
+        if(r.ok){ showLogin(false); showAdmin(true); }
+        else note(q('#loginMsg'),'Contraseña incorrecta',false);
+      }catch{ note(q('#loginMsg'),'Error de red',false); }
+    };
 
-        if(r.ok){ await checkMe(); }
-        else{ note(q('#loginMsg'), 'Contraseña incorrecta', false); }
-      }catch{
-        passInput.value = '';
-        passInput.type = 'password';
-        togglePw.textContent = '👁️';
-        note(q('#loginMsg'), 'No se pudo iniciar sesión', false);
-      }
-    });
+    q('#btnLogout').onclick = async ()=>{
+      await fetch('/api/logout',{method:'POST',credentials:'include'});
+      showAdmin(false); showLogin(true);
+    };
 
-    // Logout
-    q('#btnLogout').addEventListener('click', async ()=>{
-      try{ await fetch('/api/logout', {method:'POST', credentials:'include'}); }
-      finally{ showAdmin(false); showLogin(true); }
-    });
-
-    // Subir imagen -> completa #pImage
-    q('#btnPick').addEventListener('click', ()=> q('#pickFile').click());
-    q('#pickFile').addEventListener('change', async (e)=>{
-      const f = e.target.files[0];
-      if(!f) return;
-      note(q('#msg'), 'Subiendo imagen…');
-      const fd = new FormData();
-      fd.append('image', f);
+    q('#btnPick').onclick = ()=> q('#pickFile').click();
+    q('#pickFile').onchange = async e=>{
+      const f=e.target.files[0]; if(!f)return;
+      const fd=new FormData(); fd.append('image',f);
+      q('#msg').textContent='Subiendo...';
       try{
-        const r = await fetch('/api/upload', {method:'POST', body:fd, credentials:'include'});
-        const d = await r.json();
-        if(r.ok && d && d.url){
-          q('#pImage').value = d.url;
-          note(q('#msg'), 'Imagen subida ✓', true);
-        }else{
-          note(q('#msg'), d && d.error ? d.error : 'No se pudo subir', false);
-        }
-      }catch{
-        note(q('#msg'), 'Error al subir', false);
-      }finally{
-        q('#pickFile').value = '';
-      }
-    });
+        const r=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});
+        const d=await r.json();
+        if(r.ok && d.url){ q('#pImage').value=d.url; note(q('#msg'),'Imagen subida ✓',true); }
+        else note(q('#msg'),'No se pudo subir',false);
+      }catch{ note(q('#msg'),'Error al subir',false); }
+    };
 
-    // Agregar producto
-    q('#btnAdd').addEventListener('click', async ()=>{
-      const name = q('#pName').value.trim();
-      const stock = Number(q('#pStock').value);
-      const price = Number(q('#pPrice').value);
-      const code  = q('#pCode').value.trim();
-      const category = q('#pCategory').value;
-      const image = q('#pImage').value.trim();
-
-      if(!name){ note(q('#msg'),'Nombre requerido', false); return; }
-      if(!Number.isFinite(stock)){ note(q('#msg'),'Stock inválido', false); return; }
-      if(!Number.isFinite(price)){ note(q('#msg'),'Precio inválido', false); return; }
-
-      note(q('#msg'), 'Guardando…');
+    q('#btnAdd').onclick = async ()=>{
+      const name=q('#pName').value.trim();
+      const stock=q('#pStock').value.trim();
+      const price=q('#pPrice').value.trim();
+      const code=q('#pCode').value.trim();
+      const category=q('#pCategory').value;
+      const image=q('#pImage').value.trim();
+      if(!name){note(q('#msg'),'Nombre requerido',false);return;}
+      q('#msg').textContent='Guardando...';
       try{
-        const r = await fetch('/api/products', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          credentials:'include',
-          body: JSON.stringify({ name, stock, price, code, category, image })
+        const r=await fetch('/api/products',{
+          method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
+          body:JSON.stringify({name,stock,price,code,category,image})
         });
-        const d = await r.json();
-        if(r.ok){
-          note(q('#msg'), 'Producto agregado ✓', true);
-          // limpiar
-          ['#pName','#pStock','#pPrice','#pCode','#pImage'].forEach(sel => q(sel).value='');
-        }else{
-          note(q('#msg'), d && d.error ? d.error : 'No se pudo agregar', false);
-        }
-      }catch{
-        note(q('#msg'), 'Error de red', false);
-      }
-    });
+        if(r.ok){note(q('#msg'),'Producto agregado ✓',true);
+          ['#pName','#pStock','#pPrice','#pCode','#pImage'].forEach(s=>q(s).value='');
+        }else note(q('#msg'),'Error al guardar',false);
+      }catch{ note(q('#msg'),'Error',false); }
+    };
 
-    // Inicial
     checkMe();
   </script>
 </body>
