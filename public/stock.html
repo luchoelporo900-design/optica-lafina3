@@ -1,167 +1,118 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin — Óptica La Fina</title>
-  <link rel="icon" href="logo.png" />
-  <style>
-    :root{--gold:#C59D5F;--bg:#0e0e10;--panel:#151517;--stroke:#29292d;--text:#f4f4f4;--muted:#b8b8bc;}
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Roboto,Arial}
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#111;border-bottom:2px solid var(--gold)}
-    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
-    .brand img{width:48px;height:48px;border-radius:50%;border:2px solid var(--gold);object-fit:cover}
-    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
-    .card{background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:16px;margin-bottom:16px}
-    input,select,button{padding:10px;border-radius:8px;border:1px solid var(--stroke);background:#0b0b0d;color:var(--text)}
-    button{cursor:pointer;background:var(--gold);color:#111;border-color:var(--gold);font-weight:700}
-    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-    .muted{color:var(--muted)}
-    #adminArea{display:none}
-    .preview{display:none;width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--stroke)}
-  </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Óptica La Fina — ADMIN</title>
+  <link rel="icon" type="image/png" href="logo.png"/>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-
 <header class="topbar">
-  <a href="/" class="brand">
-    <img src="logo.png" alt="Óptica La Fina">
-    <strong>ÓPTICA LA FINA — ADMIN</strong>
-  </a>
-  <button id="btnLogout" style="display:none">Cerrar sesión</button>
+  <div class="brand"><img src="logo.png"><span>ÓPTICA LA FINA — ADMIN</span></div>
+  <nav><a class="admin-link" href="/" style="margin-right:8px">Catálogo</a>
+       <button id="btnLogout" class="admin-link" style="border-color:#c0392b">Cerrar sesión</button></nav>
 </header>
 
-<div class="wrap">
-  <!-- Login -->
-  <div id="loginBox" class="card">
-    <h3>Acceso administrador</h3>
-    <div class="row">
-      <input id="adminPass" type="password" placeholder="Contraseña de admin" style="min-width:220px">
-      <button id="btnLogin">Entrar</button>
-      <span id="loginMsg" class="muted"></span>
+<main class="container">
+  <section id="loginBox" class="panel">
+    <h2>Acceso administrador</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="adminPass" type="password" placeholder="Contraseña admin" />
+      <button id="btnLogin" class="admin-link">Entrar</button>
     </div>
-    <div class="muted" style="margin-top:6px">Se guarda en una sesión segura.</div>
-  </div>
+    <p class="muted">Se guarda en una sesión segura.</p>
+    <p id="loginMsg" class="status" style="color:#f88"></p>
+  </section>
 
-  <!-- Área admin -->
-  <div id="adminArea">
-    <div class="card">
-      <h2 style="margin:0 0 8px 0">Agregar producto</h2>
-      <div class="row">
-        <input id="pName" placeholder="Nombre">
-        <input id="pStock" type="number" placeholder="Stock">
-        <input id="pPrice" type="number" placeholder="Precio">
-        <input id="pCode" placeholder="Código (opcional)">
-        <select id="pCategory">
-          <option>Recetado</option><option>Sol</option>
-          <option>Hombre</option><option>Mujer</option><option>Niños</option>
-          <option>Metal</option><option>Acetato</option><option>Titanio</option>
-        </select>
-        <input id="pImage" placeholder="URL de imagen (opcional)" style="min-width:260px">
-        <input id="pFile" type="file" accept="image/*" style="display:none">
-        <button id="pickFile">Subir imagen</button>
-        <img id="preview" class="preview" alt="preview">
-        <span id="uploadBadge" style="display:none;margin-left:8px;color:#f5c678;font-weight:700">Subiendo…</span>
-        <button id="addBtn">Agregar</button>
-      </div>
+  <section id="adminBox" class="panel" style="display:none">
+    <h2>Agregar producto</h2>
+    <div class="formrow">
+      <input id="pName" placeholder="Nombre"/>
+      <input id="pStock" type="number" placeholder="Stock"/>
+      <input id="pPrice" type="number" placeholder="Precio"/>
+      <input id="pCode" placeholder="Código (opcional)"/>
+      <select id="pCategory">
+        <option>Recetado</option><option>Sol</option>
+        <option>Hombre</option><option>Mujer</option><option>Niños</option>
+        <option>Metal</option><option>Acetato</option><option>Titanio</option>
+      </select>
     </div>
-  </div>
-</div>
 
-<!-- MUY IMPORTANTE: el script va dentro de <script> y bien cerrado -->
+    <div class="formrow">
+      <input id="pImage" placeholder="URL de imagen (opcional)" />
+      <input id="pickFile" type="file" accept="image/*" style="display:none"/>
+      <button id="btnPick" class="admin-link">Subir imagen</button>
+      <img id="preview" style="display:none;height:80px;border-radius:8px;margin-left:8px"/>
+    </div>
+
+    <div class="formrow">
+      <button id="btnAdd" class="admin-link">Agregar</button>
+      <span id="addMsg" class="status"></span>
+    </div>
+  </section>
+</main>
+
 <script>
-  const $ = s => document.querySelector(s);
-  const showAdmin = (ok)=>{
-    $("#adminArea").style.display = ok ? "block" : "none";
-    $("#loginBox").style.display = ok ? "none" : "block";
-    $("#btnLogout").style.display = ok ? "inline-block" : "none";
+const $=s=>document.querySelector(s);
+const loginBox=$("#loginBox"), adminBox=$("#adminBox");
+const msg=$("#loginMsg"), addMsg=$("#addMsg");
+const btnLogin=$("#btnLogin"), btnLogout=$("#btnLogout");
+const adminPass=$("#adminPass");
+const pName=$("#pName"), pStock=$("#pStock"), pPrice=$("#pPrice"), pCode=$("#pCode"), pCategory=$("#pCategory");
+const pImage=$("#pImage"), pickFile=$("#pickFile"), btnPick=$("#btnPick"), preview=$("#preview");
+
+// al cargar, recuperar sesión
+window.addEventListener("DOMContentLoaded", async ()=>{
+  try{
+    const r=await fetch("/api/me"); const d=await r.json();
+    showAdmin(!!d.admin);
+  }catch{ showAdmin(false) }
+});
+
+function showAdmin(on){
+  loginBox.style.display = on? "none":"block";
+  adminBox.style.display = on? "block":"none";
+}
+// login
+btnLogin.onclick = async ()=>{
+  msg.textContent="";
+  const pw = adminPass.value.trim();
+  const r = await fetch("/api/auth/admin",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
+  if(r.ok) showAdmin(true); else msg.textContent="Contraseña incorrecta";
+};
+// logout
+btnLogout.onclick = async ()=>{ await fetch("/api/logout",{method:"POST"}); showAdmin(false); };
+
+// subir imagen
+btnPick.onclick = ()=> pickFile.click();
+pickFile.onchange = async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const fd = new FormData(); fd.append("image", f);
+  btnPick.textContent="Subiendo..."; btnPick.disabled=true;
+  const r = await fetch("/api/upload",{method:"POST", body:fd});
+  btnPick.textContent="Subir imagen"; btnPick.disabled=false;
+  const d = await r.json();
+  if(d.ok){ pImage.value = d.url; preview.src=d.url; preview.style.display="inline"; alert("Imagen subida ✔"); }
+  else alert("No se pudo subir");
+};
+
+// agregar producto
+$("#btnAdd").onclick = async ()=>{
+  addMsg.textContent="";
+  const payload = {
+    name:pName.value.trim(), stock:Number(pStock.value||0), price:Number(pPrice.value||0),
+    code:pCode.value.trim(), category:pCategory.value.trim(), image:pImage.value.trim()
   };
-
-  // ¿Ya hay sesión?
-  window.addEventListener("DOMContentLoaded", async ()=>{
-    try{
-      const r = await fetch("/api/me",{credentials:"include"});
-      const d = await r.json();
-      showAdmin(!!d.ok);
-    }catch{ showAdmin(false); }
-  });
-
-  // Login
-  $("#btnLogin").onclick = async ()=>{
-    $("#loginMsg").textContent = "";
-    const pw = $("#adminPass").value.trim();
-    const r = await fetch("/api/auth/admin",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({password:pw}),
-      credentials:"include"
-    });
-    if(r.ok){ showAdmin(true); }
-    else { $("#loginMsg").textContent = "Contraseña incorrecta"; }
-  };
-
-  // Logout
-  $("#btnLogout").onclick = async ()=>{
-    await fetch("/api/logout",{method:"POST",credentials:"include"});
-    showAdmin(false);
-  };
-
-  // Subir imagen
-  $("#pickFile").onclick = ()=> $("#pFile").click();
-  $("#pFile").onchange = async (e)=>{
-    const file = e.target.files?.[0];
-    if(!file) return;
-    const fd = new FormData();
-    fd.append("image", file);
-
-    const badge = $("#uploadBadge");
-    badge.style.display = "inline-block";
-    badge.style.color = "#f5c678";
-    badge.textContent = "Subiendo…";
-
-    try{
-      const up = await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
-      const data = await up.json();
-      if(!data.ok) throw new Error(data.error||"No se pudo subir");
-      $("#pImage").value = data.url;
-      $("#preview").src = data.url;
-      $("#preview").style.display = "inline-block";
-      badge.style.color = "#10e38b";
-      badge.textContent = "¡Imagen subida!";
-    }catch(err){
-      badge.style.color = "#ff8b8b";
-      badge.textContent = "Error al subir";
-      alert(err.message);
-    }
-  };
-
-  // Agregar producto
-  $("#addBtn").onclick = async ()=>{
-    const payload = {
-      name: $("#pName").value.trim(),
-      stock: Number($("#pStock").value||0),
-      price: Number($("#pPrice").value||0),
-      code: $("#pCode").value.trim(),
-      category: $("#pCategory").value,
-      image: $("#pImage").value.trim()
-    };
-    if(!payload.name){ alert("Nombre requerido"); return; }
-
-    const r = await fetch("/api/products",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload),
-      credentials:"include"
-    });
-    const data = await r.json();
-    if(!data.ok){ alert(data.error||"No se pudo agregar"); return; }
-
+  if(!payload.name){ alert("Nombre requerido"); return; }
+  const r = await fetch("/api/products",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const d = await r.json();
+  if(d.ok){
     ["#pName","#pStock","#pPrice","#pCode","#pImage"].forEach(s=>$(s).value="");
-    $("#preview").style.display="none";
-    $("#uploadBadge").style.display="none";
-    alert("Producto agregado ✔");
-  };
+    preview.style.display="none";
+    addMsg.textContent = "Producto agregado ✔";
+  }else alert("No se pudo agregar");
+};
 </script>
 </body>
 </html>
