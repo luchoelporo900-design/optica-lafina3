@@ -2,126 +2,202 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Admin — Óptica La Fina</title>
-<link rel="icon" type="image/png" href="/logo.png" />
-<link rel="stylesheet" href="/styles.css" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ÓPTICA LA FINA — ADMIN</title>
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f0f10; --panel:#141417; --gold:#e0b64b; --gold-2:#c99b2e; --text:#f3f3f3; --muted:#9aa0a6;
+    --accent:#ffcf4d; --danger:#ff5f5f;
+  }
+  *{box-sizing:border-box} body{margin:0;font-family:Poppins,system-ui,sans-serif;background:var(--bg);color:var(--text)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:2px solid var(--gold)}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+  .brand b{letter-spacing:.5px}
+  .btn{background:transparent;border:2px solid var(--gold);color:var(--text);padding:6px 12px;border-radius:12px;cursor:pointer}
+  .btn.gold{background:var(--gold);color:#151515;border-color:var(--gold-2);font-weight:700}
+  .btn.danger{background:transparent;border-color:#ff7b7b;color:#ff7b7b}
+  main{max-width:980px;margin:26px auto;padding:0 16px}
+  .card{background:var(--panel);border:1px solid #27272b;border-radius:16px;padding:18px;box-shadow:0 6px 14px rgba(0,0,0,.25)}
+  h1{margin:0 0 14px;font-size:26px;color:var(--accent)}
+  form.grid{display:grid;grid-template-columns:1.5fr .8fr .8fr 1fr 1fr;gap:10px}
+  .row{display:flex;gap:10px;align-items:center;margin-top:10px}
+  input,select{background:#101013;border:1px solid #2a2b2f;color:var(--text);padding:10px;border-radius:10px;outline:none}
+  input::placeholder{color:#6f7379}
+  small{color:var(--muted)}
+  .list{margin-top:22px}
+  .item{display:grid;grid-template-columns:80px 1fr 120px;gap:14px;align-items:center;padding:10px;border-bottom:1px dashed #2a2b2f}
+  .thumb{width:80px;height:60px;background:#0b0b0e;border:1px solid #222;border-radius:10px;object-fit:cover}
+  .tag{display:inline-block;background:#1a1b1f;padding:4px 8px;border-radius:10px;border:1px solid #2a2b2f;color:#bfc5cd;font-size:12px;margin-right:6px}
+  footer{margin:28px auto 18px;max-width:980px;color:#b9b9b9;border-top:2px solid var(--gold);padding:10px 16px;text-align:center}
+</style>
 </head>
 <body>
-  <header class="header">
+  <header>
     <div class="brand">
-      <img src="/logo.png" alt="Óptica La Fina" />
-      <span>ÓPTICA LA FINA — ADMIN</span>
+      <img src="/logo.png" alt="La Fina">
+      <b>ÓPTICA LA FINA — ADMIN</b>
     </div>
-    <a class="admin" href="/index.html">Volver al catálogo</a>
+    <div>
+      <a href="/" class="btn">Volver al catálogo</a>
+      <button id="btnLogout" class="btn">Cerrar sesión</button>
+    </div>
   </header>
 
-  <div class="admin-wrap">
-    <div class="admin-title"><img src="/logo.png" alt=""> <h2 style="margin:0">Acceso administrador</h2></div>
-    <div id="loginBox" class="row">
-      <input id="adminPass" type="password" placeholder="Contraseña admin" />
-      <button id="btnLogin">Entrar</button>
-      <div class="note">Se guarda en una sesión segura.</div>
-    </div>
+  <main>
+    <div class="card">
+      <h1>Acceso administrador</h1>
 
-    <div id="panel" style="display:none">
-      <h3 class="admin-title" style="margin-top:6px"><img src="/logo.png" alt="">Agregar producto</h3>
-      <div class="row">
-        <input id="pName" placeholder="Nombre" />
-        <input id="pStock" type="number" min="0" placeholder="Stock" />
-        <input id="pPrice" type="number" min="0" placeholder="Precio" />
-        <input id="pCode" placeholder="Código (opcional)" />
-        <select id="pCategory">
-          <option>Recetado</option><option>Hombre</option><option>Mujer</option>
-          <option>Niños</option><option>Sol</option><option>Metal</option>
-          <option>Acetato</option><option>Titanio</option>
-        </select>
+      <div id="loginBox" class="row" style="margin:10px 0;">
+        <input id="adminPass" type="password" placeholder="Contraseña admin" style="width:260px">
+        <button id="btnLogin" class="btn gold">Entrar</button>
+        <small>Clave por defecto: <b>lafina123325</b></small>
+        <div id="loginMsg" style="color:#ff8c8c;margin-left:8px"></div>
       </div>
 
-      <div class="row">
-        <input id="pImage" placeholder="URL de imagen (opcional)" style="flex:1" />
-        <input id="pickFile" type="file" accept="image/*" style="display:none" />
-        <button id="btnUpload" type="button">Subir imagen</button>
-        <button id="btnAdd" type="button">Agregar</button>
-        <button id="btnLogout" type="button" style="margin-left:auto;background:#222;color:#fff;border-color:#333">Cerrar sesión</button>
-      </div>
+      <div id="adminBox" style="display:none">
+        <h2 style="margin:10px 0 6px">Agregar producto</h2>
+        <form class="grid" onsubmit="return false;">
+          <input id="pName" placeholder="Nombre">
+          <input id="pStock" placeholder="Stock" type="number" min="0">
+          <input id="pPrice" placeholder="Precio" type="number" min="0">
+          <input id="pCode" placeholder="Código (opcional)">
+          <select id="pCategory">
+            <option value="hombre">Hombre</option>
+            <option value="mujer">Mujer</option>
+            <option value="niños">Niños</option>
+            <option value="sol">Sol</option>
+            <option value="recetado" selected>Recetado</option>
+            <option value="metal">Metal</option>
+            <option value="acetato">Acetato</option>
+            <option value="titanio">Titanio</option>
+          </select>
+        </form>
+        <div class="row">
+          <input id="pImage" placeholder="URL de imagen (opcional)" style="flex:1">
+          <input id="pickFile" type="file" accept="image/*" style="display:none">
+          <button id="btnPick" class="btn">Subir imagen</button>
+          <button id="btnAdd" class="btn gold">Agregar</button>
+        </div>
+        <small>Si subes una imagen, se completa el campo automáticamente.</small>
 
-      <div id="preview" class="preview"><img alt="Vista previa"></div>
-      <div class="note">Si subes una imagen, se completa el campo automáticamente.</div>
+        <div class="list" id="list"></div>
+      </div>
     </div>
-  </div>
+  </main>
+
+  <footer>© Óptica La Fina — Santaní PY</footer>
 
 <script>
-const $=s=>document.querySelector(s);
-const api=(p,opt={})=>fetch(p,{credentials:'include',...opt});
+const q = s => document.querySelector(s);
 
-/* Estado de sesión al entrar */
-(async()=>{
-  try{
-    const r=await api('/api/me'); const d=await r.json();
-    if(d && d.ok){ showPanel(true); } else { showPanel(false); }
-  }catch{ showPanel(false); }
-})();
-
-function showPanel(on){
-  $('#loginBox').style.display = on?'none':'';
-  $('#panel').style.display = on?'':'none';
+// estado de sesión
+async function checkMe(){
+  const r = await fetch('/api/me', {credentials:'include'});
+  const me = await r.json();
+  if(me.admin){
+    q('#loginBox').style.display='none';
+    q('#adminBox').style.display='';
+    loadList();
+  }else{
+    q('#loginBox').style.display='';
+    q('#adminBox').style.display='none';
+  }
 }
+checkMe();
 
-/* Login */
-$('#btnLogin').onclick=async()=>{
-  try{
-    const pw = $('#adminPass').value.trim();
-    const r = await api('/api/auth/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
-    const d = await r.json();
-    if(d && d.ok){ showPanel(true); } else { alert('Contraseña incorrecta'); }
-  }catch{ alert('No se pudo iniciar sesión'); }
+// login
+q('#btnLogin').onclick = async ()=>{
+  q('#loginMsg').textContent = '';
+  const pw = q('#adminPass').value.trim();
+  const r = await fetch('/api/auth/admin', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body: JSON.stringify({password: pw})
+  });
+  if(r.ok){ await checkMe(); }
+  else q('#loginMsg').textContent = 'Contraseña incorrecta';
 };
 
-/* Logout */
-$('#btnLogout').onclick=async()=>{
-  await api('/api/logout',{method:'POST'});
-  showPanel(false);
+// logout
+q('#btnLogout').onclick = async ()=>{
+  await fetch('/api/logout', {method:'POST', credentials:'include'});
+  location.reload();
 };
 
-/* Upload imagen */
-$('#btnUpload').onclick=()=>$('#pickFile').click();
-$('#pickFile').onchange=async(e)=>{
-  const file = e.target.files[0]; if(!file) return;
-  try{
-    const fd = new FormData(); fd.append('image',file);
-    const r = await api('/api/upload',{method:'POST',body:fd});
-    const d = await r.json();
-    if(d && d.path){
-      $('#pImage').value = d.path; // ej: /uploads/xxx.png
-      const pv = $('#preview'); pv.style.display='block'; pv.querySelector('img').src = d.path.startsWith('http')? d.path : d.path;
-      alert('Imagen subida ✓');
-    }else{ alert('No se pudo subir'); }
-  }catch{ alert('Error al subir'); }
+// subir imagen
+q('#btnPick').onclick = ()=> q('#pickFile').click();
+q('#pickFile').onchange = async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const fd = new FormData();
+  fd.append('image', file);
+  const up = await fetch('/api/upload', {method:'POST', body:fd, credentials:'include'});
+  const j = await up.json();
+  if(!up.ok || !j.ok){ alert('No se pudo subir'); return; }
+  q('#pImage').value = j.url;
+  alert('Imagen subida ✓');
 };
 
-/* Agregar producto */
-$('#btnAdd').onclick=async()=>{
+// agregar producto
+q('#btnAdd').onclick = async ()=>{
   const payload = {
-    name: $('#pName').value.trim(),
-    stock: Number($('#pStock').value||0),
-    price: Number($('#pPrice').value||0),
-    code: $('#pCode').value.trim(),
-    category: $('#pCategory').value,
-    image: $('#pImage').value.trim()
+    name: q('#pName').value.trim(),
+    stock: Number(q('#pStock').value||0),
+    price: Number(q('#pPrice').value||0),
+    code: q('#pCode').value.trim(),
+    category: q('#pCategory').value,
+    image: q('#pImage').value.trim()
   };
   if(!payload.name){ alert('Nombre requerido'); return; }
-  try{
-    const r = await api('/api/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const d = await r.json();
-    if(d && d.ok){ alert('Producto agregado ✓'); clearForm(); }
-    else{ alert('No autorizado o error al guardar'); }
-  }catch{ alert('Error de red'); }
+  const r = await fetch('/api/products', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body: JSON.stringify(payload)
+  });
+  const data = await r.json();
+  if(!r.ok || !data.ok){ alert('No se pudo agregar'); return; }
+  // limpiar
+  ['#pName','#pStock','#pPrice','#pCode','#pImage'].forEach(s=> q(s).value='');
+  await loadList();
+  alert('Producto agregado ✓');
 };
-function clearForm(){
-  ['#pName','#pStock','#pPrice','#pCode','#pImage'].forEach(s=>$(s).value='');
-  $('#preview').style.display='none';
+
+// listar con botón eliminar
+async function loadList(){
+  const r = await fetch('/api/products', {credentials:'include'});
+  const items = await r.json();
+  const el = q('#list');
+  if(!items.length){ el.innerHTML = '<small class="muted">No hay productos cargados.</small>'; return; }
+  el.innerHTML = items.map(p=>`
+    <div class="item">
+      <img class="thumb" src="${p.image||'/logo.png'}" onerror="this.src='/logo.png'">
+      <div>
+        <div style="font-weight:700">${p.name}</div>
+        <div class="tag">Gs ${Number(p.price||0).toLocaleString()}</div>
+        <div class="tag">Stock: ${p.stock||0}</div>
+        <div class="tag">Cod: ${p.code||'-'}</div>
+        <div class="tag">${(p.category||'').toUpperCase()}</div>
+      </div>
+      <div style="text-align:right">
+        <button class="btn danger" onclick="deleteProduct('${p.id}')">Eliminar</button>
+      </div>
+    </div>
+  `).join('');
 }
+
+window.deleteProduct = async function(id){
+  if(!confirm('¿Eliminar este producto?')) return;
+  const r = await fetch('/api/products/'+id, {method:'DELETE', credentials:'include'});
+  const j = await r.json();
+  if(!r.ok || !j.ok){ alert('No se pudo eliminar'); return; }
+  await loadList();
+};
 </script>
 </body>
 </html>
