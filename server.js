@@ -1,110 +1,128 @@
-// server.js
 import express from "express";
 import path from "path";
-import multer from "multer";
 import fs from "fs";
+import multer from "multer";
 import cookieParser from "cookie-parser";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(express.json());
-app.use(cookieParser());
-
-const __dirname = path.resolve();
 const PORT = process.env.PORT || 10000;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "lafina123325";
 
-// ==== RUTAS ESTÁTICAS ====
+const DATA_FILE = path.join(__dirname, "data.json");
+const UPLOAD_DIR = path.join(__dirname, "uploads");
+
+// --- util json ---
+function readData() {
+  try {
+    return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+  } catch {
+    return { products: [] };
+  }
+}
+function writeData(data) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
+
+// --- middlewares ---
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(UPLOAD_DIR));
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ==== BASE DE DATOS SIMPLE (JSON LOCAL) ====
-const dbFile = path.join(__dirname, "data.json");
-if (!fs.existsSync(dbFile)) fs.writeFileSync(dbFile, "[]");
-
-function loadData() {
-  return JSON.parse(fs.readFileSync(dbFile, "utf-8"));
+// --- auth helpers ---
+const COOKIE_NAME = "lafina_admin";
+function isAuthed(req) {
+  return req.cookies?.[COOKIE_NAME] === "1";
 }
-function saveData(data) {
-  fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
+function requireAuth(req, res, next) {
+  if (!isAuthed(req)) return res.status(401).json({ ok: false, error: "unauthorized" });
+  next();
 }
 
-// ==== AUTENTICACIÓN SIMPLE ====
-const ADMIN_PASS = "lafina123325";
+// --- auth api ---
 app.post("/api/auth/admin", (req, res) => {
-  const { password } = req.body;
-  if (password === ADMIN_PASS) {
-    res.cookie("session", "admin", { httpOnly: true, sameSite: "strict" });
+  const { password } = req.body || {};
+  if (password && password === ADMIN_PASSWORD) {
+    res.cookie(COOKIE_NAME, "1", { httpOnly: true, sameSite: "lax", maxAge: 1000 * 60 * 60 * 8 });
     return res.json({ ok: true });
   }
-  res.status(401).json({ ok: false });
+  res.status(401).json({ ok: false, error: "bad_password" });
 });
 app.post("/api/logout", (req, res) => {
-  res.clearCookie("session");
+  res.clearCookie(COOKIE_NAME);
   res.json({ ok: true });
 });
-app.get("/api/me", (req, res) => {
-  res.json({ ok: req.cookies.session === "admin" });
-});
+app.get("/api/me", (req, res) => res.json({ admin: isAuthed(req) }));
 
-// ==== SUBIDA DE IMÁGENES ====
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
+// --- upload ---
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
-    cb(null, name);
+  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+  filename: (_req, file, cb) => {
+    const base = Date.now() + "-" + file.originalname.replace(/\s+/g, "_");
+    cb(null, base);
   },
 });
 const upload = multer({ storage });
 
-app.post("/api/upload", upload.single("image"), (req, res) => {
-  if (!req.cookies.session || req.cookies.session !== "admin") {
-    return res.status(401).json({ ok: false, error: "noAuth" });
-  }
-  if (!req.file)
-    return res.status(400).json({ ok: false, error: "noFile" });
-
-  const filePath = "/uploads/" + req.file.filename;
-  res.json({ ok: true, path: filePath });
+app.post("/api/upload", requireAuth, upload.single("image"), (req, res) => {
+  if (!req.file) return res.status(400).json({ ok: false, error: "no_file" });
+  const url = `/uploads/${req.file.filename}`;
+  res.json({ ok: true, url });
 });
 
-// ==== CRUD DE PRODUCTOS ====
-app.get("/api/products", (req, res) => {
-  res.json(loadData());
+// --- products list ---
+app.get("/api/products", (_req, res) => {
+  const data = readData();
+  res.json(data.products || []);
 });
 
-app.post("/api/products", (req, res) => {
-  if (!req.cookies.session || req.cookies.session !== "admin") {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
-  }
-  const products = loadData();
-  const newItem = {
-    id: Date.now().toString(36),
-    name: req.body.name,
-    stock: req.body.stock || 0,
-    price: req.body.price || 0,
-    code: req.body.code || "",
-    category: req.body.category || "General",
-    image: req.body.image || "",
-  };
-  products.push(newItem);
-  saveData(products);
-  res.json({ ok: true, product: newItem });
+// --- add product ---
+app.post("/api/products", requireAuth, (req, res) => {
+  const { name, stock, price, code, category, image } = req.body || {};
+  if (!name) return res.status(400).json({ ok: false, error: "name_required" });
+  const data = readData();
+  const id = String(Date.now());
+  data.products.unshift({
+    id,
+    name,
+    stock: Number(stock || 0),
+    price: Number(price || 0),
+    code: (code || "").trim(),
+    category: (category || "otros").toLowerCase(),
+    image: image || "",
+    createdAt: new Date().toISOString(),
+  });
+  writeData(data);
+  res.json({ ok: true, id });
 });
 
-app.delete("/api/products/:id", (req, res) => {
-  if (!req.cookies.session || req.cookies.session !== "admin") {
-    return res.status(401).json({ ok: false });
+// --- DELETE product (NUEVO) ---
+app.delete("/api/products/:id", requireAuth, (req, res) => {
+  const { id } = req.params;
+  const data = readData();
+  const item = data.products.find(p => p.id === id);
+  if (!item) return res.status(404).json({ ok: false, error: "not_found" });
+
+  // borrar imagen física si es /uploads/...
+  if (item.image && item.image.startsWith("/uploads/")) {
+    const localPath = path.join(__dirname, item.image);
+    if (fs.existsSync(localPath)) {
+      try { fs.unlinkSync(localPath); } catch {}
+    }
   }
-  const products = loadData();
-  const filtered = products.filter(p => p.id !== req.params.id);
-  saveData(filtered);
+  data.products = data.products.filter(p => p.id !== id);
+  writeData(data);
   res.json({ ok: true });
 });
 
-// ==== INICIO ====
-app.listen(PORT, () => {
-  console.log("✅ Servidor en puerto", PORT);
-});
+// --- routes ---
+app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/stock.html", (_req, res) => res.sendFile(path.join(__dirname, "public", "stock.html")));
+
+app.listen(PORT, () => console.log("Óptica La Fina corriendo en", PORT));
