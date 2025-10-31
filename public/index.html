@@ -1,53 +1,39 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Óptica La Fina — Catálogo</title>
-  <link rel="icon" type="image/png" href="logo.png">
-<link rel="stylesheet" href="styles.css">
-...
-<script src="app.js" type="text/javascript"></script>
-
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <img src="/public/logo.png" alt="Óptica La Fina">
-      <span>ÓPTICA LA FINA</span>
-    </div>
-    <nav class="nav">
-      <a href="/stock.html" class="admin-link">Subir productos (Admin)</a>
-    </nav>
-  </header>
-
-  <main class="container">
-    <h1>Catálogo de Lentes</h1>
-
-    <div class="search">
-      <input id="q" type="text" placeholder="Buscar por nombre o código...">
-    </div>
-
-    <div id="chips" class="chips"></div>
-
-    <p id="status" class="status"></p>
-
-    <section id="grid" class="grid"></section>
-
-    <footer class="foot">
-      © Óptica La Fina — Santaní PY
-    </footer>
-  </main>
-
-  <!-- Lightbox (ampliar imagen) -->
-  <div id="lightbox" class="lightbox hidden">
-    <img id="lightImg" alt="Vista ampliada">
-    <button id="closeLb" class="lb-close" aria-label="Cerrar">×</button>
+<header class="topbar">
+  <div class="brand">
+    <img src="logo.png" alt="Óptica La Fina" />
+    <span>ÓPTICA LA FINA</span>
   </div>
+  <nav><a class="admin-link" href="/stock.html">Subir productos (Admin)</a></nav>
+</header>
 
-  <!-- Botón flotante WhatsApp para favoritos -->
-  <a id="sendWA" class="fab" style="display:none">Enviar por WhatsApp</a>
+<main class="container">
+  <h1>Catálogo de Lentes</h1>
+  <div class="search"><input id="q" placeholder="Buscar por nombre o código..." /></div>
+  <div id="chips" class="chips"></div>
+  <p id="status" class="status"></p>
+  <section id="grid" class="grid"></section>
+  <footer class="foot">© Óptica La Fina — Santaní PY</footer>
+</main>
 
-  <script src="/public/app.js" type="text/javascript"></script>
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox hidden">
+  <img id="lightImg" alt="Vista ampliada" />
+  <button id="closeLb" class="lb-close" aria-label="Cerrar">×</button>
+</div>
+
+<!-- WhatsApp favoritos -->
+<a id="sendWA" class="fab" style="display:none">Enviar por WhatsApp</a>
+
+<script src="app.js"></script>
 </body>
 </html>
