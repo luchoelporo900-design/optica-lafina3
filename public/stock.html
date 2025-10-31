@@ -1,160 +1,127 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Óptica La Fina — ADMIN</title>
-  <link rel="icon" type="image/png" href="logo.png"/>
-  <link rel="stylesheet" href="styles.css"/>
-  <style>
-    .table{width:100%;margin-top:18px;border-collapse:collapse}
-    .table th,.table td{border-bottom:1px solid #2c2c2c;padding:8px;text-align:left}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #d4af37;border-radius:999px;color:#d4af37}
-    .danger{border-color:#c0392b;color:#c0392b}
-    .thumb-sm{height:38px;border-radius:8px}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin — Óptica La Fina</title>
+<link rel="icon" type="image/png" href="/logo.png" />
+<link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-<header class="topbar">
-  <div class="brand"><img src="logo.png"><span>ÓPTICA LA FINA — ADMIN</span></div>
-  <nav><a class="admin-link" href="/" style="margin-right:8px">Catálogo</a>
-       <button id="btnLogout" class="admin-link" style="border-color:#c0392b">Cerrar sesión</button></nav>
-</header>
+  <header class="header">
+    <div class="brand">
+      <img src="/logo.png" alt="Óptica La Fina" />
+      <span>ÓPTICA LA FINA — ADMIN</span>
+    </div>
+    <a class="admin" href="/index.html">Volver al catálogo</a>
+  </header>
 
-<main class="container">
-  <section id="loginBox" class="panel">
-    <h2>Acceso administrador</h2>
-    <div style="display:flex;gap:8px;align-items:center">
+  <div class="admin-wrap">
+    <div class="admin-title"><img src="/logo.png" alt=""> <h2 style="margin:0">Acceso administrador</h2></div>
+    <div id="loginBox" class="row">
       <input id="adminPass" type="password" placeholder="Contraseña admin" />
-      <button id="btnLogin" class="admin-link">Entrar</button>
-    </div>
-    <p class="muted">Se guarda en una sesión segura.</p>
-    <p id="loginMsg" class="status" style="color:#f88"></p>
-  </section>
-
-  <section id="adminBox" class="panel" style="display:none">
-    <h2>Agregar producto</h2>
-    <div class="formrow">
-      <input id="pName" placeholder="Nombre"/>
-      <input id="pStock" type="number" placeholder="Stock"/>
-      <input id="pPrice" type="number" placeholder="Precio"/>
-      <input id="pCode" placeholder="Código (opcional)"/>
-      <select id="pCategory">
-        <option>Recetado</option><option>Sol</option>
-        <option>Hombre</option><option>Mujer</option><option>Niños</option>
-        <option>Metal</option><option>Acetato</option><option>Titanio</option>
-      </select>
+      <button id="btnLogin">Entrar</button>
+      <div class="note">Se guarda en una sesión segura.</div>
     </div>
 
-    <div class="formrow">
-      <input id="pImage" placeholder="URL de imagen (opcional)" />
-      <input id="pickFile" type="file" accept="image/*" style="display:none"/>
-      <button id="btnPick" class="admin-link">Subir imagen</button>
-      <img id="preview" style="display:none;height:80px;border-radius:8px;margin-left:8px"/>
-    </div>
+    <div id="panel" style="display:none">
+      <h3 class="admin-title" style="margin-top:6px"><img src="/logo.png" alt="">Agregar producto</h3>
+      <div class="row">
+        <input id="pName" placeholder="Nombre" />
+        <input id="pStock" type="number" min="0" placeholder="Stock" />
+        <input id="pPrice" type="number" min="0" placeholder="Precio" />
+        <input id="pCode" placeholder="Código (opcional)" />
+        <select id="pCategory">
+          <option>Recetado</option><option>Hombre</option><option>Mujer</option>
+          <option>Niños</option><option>Sol</option><option>Metal</option>
+          <option>Acetato</option><option>Titanio</option>
+        </select>
+      </div>
 
-    <div class="formrow">
-      <button id="btnAdd" class="admin-link">Agregar</button>
-      <span id="addMsg" class="status"></span>
-    </div>
+      <div class="row">
+        <input id="pImage" placeholder="URL de imagen (opcional)" style="flex:1" />
+        <input id="pickFile" type="file" accept="image/*" style="display:none" />
+        <button id="btnUpload" type="button">Subir imagen</button>
+        <button id="btnAdd" type="button">Agregar</button>
+        <button id="btnLogout" type="button" style="margin-left:auto;background:#222;color:#fff;border-color:#333">Cerrar sesión</button>
+      </div>
 
-    <h2 style="margin-top:28px">Productos actuales</h2>
-    <table class="table" id="tbl">
-      <thead>
-        <tr><th>Imagen</th><th>Nombre</th><th>Código</th><th>Categoría</th><th>Precio</th><th>Stock</th><th></th></tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-  </section>
-</main>
+      <div id="preview" class="preview"><img alt="Vista previa"></div>
+      <div class="note">Si subes una imagen, se completa el campo automáticamente.</div>
+    </div>
+  </div>
 
 <script>
 const $=s=>document.querySelector(s);
-const rows=$("#rows");
-const loginBox=$("#loginBox"), adminBox=$("#adminBox");
-const msg=$("#loginMsg"), addMsg=$("#addMsg");
-const btnLogin=$("#btnLogin"), btnLogout=$("#btnLogout");
-const adminPass=$("#adminPass");
-const pName=$("#pName"), pStock=$("#pStock"), pPrice=$("#pPrice"), pCode=$("#pCode"), pCategory=$("#pCategory");
-const pImage=$("#pImage"), pickFile=$("#pickFile"), btnPick=$("#btnPick"), preview=$("#preview");
+const api=(p,opt={})=>fetch(p,{credentials:'include',...opt});
 
-window.addEventListener("DOMContentLoaded", async ()=>{
+/* Estado de sesión al entrar */
+(async()=>{
   try{
-    const r=await fetch("/api/me"); const d=await r.json();
-    showAdmin(!!d.admin);
-  }catch{ showAdmin(false) }
-});
+    const r=await api('/api/me'); const d=await r.json();
+    if(d && d.ok){ showPanel(true); } else { showPanel(false); }
+  }catch{ showPanel(false); }
+})();
 
-function showAdmin(on){
-  loginBox.style.display = on? "none":"block";
-  adminBox.style.display = on? "block":"none";
-  if(on) loadList();
-}
-async function loadList(){
-  const r = await fetch("/api/products");
-  const d = await r.json();
-  const items = Array.isArray(d.items)? d.items : [];
-  rows.innerHTML = items.map(p=>`
-    <tr>
-      <td>${p.image? `<img class="thumb-sm" src="${p.image}">`:""}</td>
-      <td>${p.name||""}</td>
-      <td>${p.code||""}</td>
-      <td>${p.category||""}</td>
-      <td>Gs ${Number(p.price||0).toLocaleString("es-PY")}</td>
-      <td>${p.stock||0}</td>
-      <td><button class="pill danger" data-del="${p.id}">Eliminar</button></td>
-    </tr>
-  `).join("");
-
-  rows.querySelectorAll("[data-del]").forEach(b=>{
-    b.onclick = async ()=>{
-      const id = b.dataset.del;
-      if(!confirm("¿Eliminar este producto? Se borrará también la foto subida.")) return;
-      const r = await fetch("/api/products/"+id, { method:"DELETE" });
-      if(r.ok){ loadList(); alert("Eliminado ✔"); } else { alert("No se pudo eliminar"); }
-    };
-  });
+function showPanel(on){
+  $('#loginBox').style.display = on?'none':'';
+  $('#panel').style.display = on?'':'none';
 }
 
-// login/logout
-btnLogin.onclick = async ()=>{
-  msg.textContent="";
-  const pw = adminPass.value.trim();
-  const r = await fetch("/api/auth/admin",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
-  if(r.ok) showAdmin(true); else msg.textContent="Contraseña incorrecta";
-};
-btnLogout.onclick = async ()=>{ await fetch("/api/logout",{method:"POST"}); showAdmin(false); };
-
-// subir imagen
-btnPick.onclick = ()=> pickFile.click();
-pickFile.onchange = async (e)=>{
-  const f = e.target.files[0]; if(!f) return;
-  const fd = new FormData(); fd.append("image", f);
-  btnPick.textContent="Subiendo..."; btnPick.disabled=true;
-  const r = await fetch("/api/upload",{method:"POST", body:fd});
-  btnPick.textContent="Subir imagen"; btnPick.disabled=false;
-  const d = await r.json();
-  if(d.ok){ pImage.value = d.url; preview.src=d.url; preview.style.display="inline"; alert("Imagen subida ✔"); }
-  else alert("No se pudo subir");
+/* Login */
+$('#btnLogin').onclick=async()=>{
+  try{
+    const pw = $('#adminPass').value.trim();
+    const r = await api('/api/auth/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    const d = await r.json();
+    if(d && d.ok){ showPanel(true); } else { alert('Contraseña incorrecta'); }
+  }catch{ alert('No se pudo iniciar sesión'); }
 };
 
-// agregar
-$("#btnAdd").onclick = async ()=>{
-  addMsg.textContent="";
+/* Logout */
+$('#btnLogout').onclick=async()=>{
+  await api('/api/logout',{method:'POST'});
+  showPanel(false);
+};
+
+/* Upload imagen */
+$('#btnUpload').onclick=()=>$('#pickFile').click();
+$('#pickFile').onchange=async(e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    const fd = new FormData(); fd.append('image',file);
+    const r = await api('/api/upload',{method:'POST',body:fd});
+    const d = await r.json();
+    if(d && d.path){
+      $('#pImage').value = d.path; // ej: /uploads/xxx.png
+      const pv = $('#preview'); pv.style.display='block'; pv.querySelector('img').src = d.path.startsWith('http')? d.path : d.path;
+      alert('Imagen subida ✓');
+    }else{ alert('No se pudo subir'); }
+  }catch{ alert('Error al subir'); }
+};
+
+/* Agregar producto */
+$('#btnAdd').onclick=async()=>{
   const payload = {
-    name:pName.value.trim(), stock:Number(pStock.value||0), price:Number(pPrice.value||0),
-    code:pCode.value.trim(), category:pCategory.value.trim(), image:pImage.value.trim()
+    name: $('#pName').value.trim(),
+    stock: Number($('#pStock').value||0),
+    price: Number($('#pPrice').value||0),
+    code: $('#pCode').value.trim(),
+    category: $('#pCategory').value,
+    image: $('#pImage').value.trim()
   };
-  if(!payload.name){ alert("Nombre requerido"); return; }
-  const r = await fetch("/api/products",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  const d = await r.json();
-  if(d.ok){
-    ["#pName","#pStock","#pPrice","#pCode","#pImage"].forEach(s=>$(s).value="");
-    preview.style.display="none";
-    addMsg.textContent = "Producto agregado ✔";
-    loadList();
-  }else alert("No se pudo agregar");
+  if(!payload.name){ alert('Nombre requerido'); return; }
+  try{
+    const r = await api('/api/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d = await r.json();
+    if(d && d.ok){ alert('Producto agregado ✓'); clearForm(); }
+    else{ alert('No autorizado o error al guardar'); }
+  }catch{ alert('Error de red'); }
 };
+function clearForm(){
+  ['#pName','#pStock','#pPrice','#pCode','#pImage'].forEach(s=>$(s).value='');
+  $('#preview').style.display='none';
+}
 </script>
 </body>
 </html>
