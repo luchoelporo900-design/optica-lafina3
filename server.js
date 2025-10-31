@@ -1,119 +1,121 @@
-// server.js  —  Óptica La Fina (Express + sesiones + JSON + upload)
-
-const path = require("path");
-const fs = require("fs");
+// --- Óptica La Fina – servidor simple y robusto ---
 const express = require("express");
 const session = require("express-session");
-const multer = require("multer");
+const multer  = require("multer");
+const fs = require("fs");
+const fsp = fs.promises;
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "lafina123325";
 
-// --- rutas y carpetas ---
 const ROOT = __dirname;
-const PUBLIC_DIR = path.join(ROOT, "public");
-const DATA_DIR = path.join(ROOT, "data");
-const UP_DIR = path.join(ROOT, "uploads");
-const DB_FILE = path.join(DATA_DIR, "db.json");
+const PUB  = path.join(ROOT, "public");
+const UP   = path.join(PUB, "uploads");
+const DB   = path.join(ROOT, "data.json");
 
-// --- asegurar carpetas/archivos ---
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-if (!fs.existsSync(UP_DIR)) fs.mkdirSync(UP_DIR);
-if (!fs.existsSync(DB_FILE)) fs.writeFileSync(DB_FILE, JSON.stringify({ items: [] }, null, 2));
-
-// --- util DB simple ---
-function readDB() {
-  try { return JSON.parse(fs.readFileSync(DB_FILE, "utf8")); }
-  catch { return { items: [] }; }
+// helpers DB
+async function readDB() {
+  try {
+    const raw = await fsp.readFile(DB, "utf8");
+    const j = JSON.parse(raw);
+    j.items ||= [];
+    return j;
+  } catch {
+    return { items: [] };
+  }
 }
-function writeDB(data) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+async function writeDB(data) {
+  await fsp.writeFile(DB, JSON.stringify(data, null, 2), "utf8");
 }
 
-// --- middlewares básicos ---
+// preparar carpetas
+(async () => {
+  try { await fsp.mkdir(UP, { recursive: true }); } catch {}
+  try { await fsp.access(DB); } catch { await writeDB({ items: [] }); }
+})();
+
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
 app.use(session({
-  secret: process.env.SESSION_SECRET || "lafina_session_secret",
+  secret: process.env.SESSION_SECRET || "lafina-session-secret",
   resave: false,
   saveUninitialized: false,
   cookie: { sameSite: "lax" }
 }));
 
-// --- estáticos ---
-app.use("/uploads", express.static(UP_DIR));
-app.use(express.static(PUBLIC_DIR));  // sirve index.html, app.js, etc.
+// estáticos
+app.use(express.static(PUB, { index: "index.html" }));
 
-// --- auth helpers ---
-function isAdmin(req) { return !!req.session.admin; }
-function requireAdmin(req, res, next) {
-  if (!isAdmin(req)) return res.status(401).json({ ok: false, error: "No autorizado" });
-  next();
-}
-
-// --- auth endpoints ---
-app.get("/api/me", (req, res) => res.json({ ok: isAdmin(req) }));
-
-app.post("/api/auth/admin", (req, res) => {
+// auth
+app.post("/api/auth/admin", async (req, res) => {
   const { password } = req.body || {};
-  if (String(password || "") === String(ADMIN_PASSWORD)) {
+  if (password === ADMIN_PASSWORD) {
     req.session.admin = true;
     return res.json({ ok: true });
   }
-  res.status(401).json({ ok: false, error: "Clave incorrecta" });
+  res.status(401).json({ ok: false, error: "unauthorized" });
 });
-
 app.post("/api/logout", (req, res) => {
-  req.session.destroy(() => res.json({ ok: true }));
+  req.session.destroy(()=> res.json({ ok:true }));
+});
+app.get("/api/me", (req, res) => {
+  res.json({ ok: true, admin: !!req.session.admin });
 });
 
-// --- productos ---
-app.get("/api/products", (req, res) => {
-  const db = readDB();
-  res.json({ ok: true, items: db.items || [] });
+function needAdmin(req, res, next){
+  if (req.session?.admin) return next();
+  return res.status(401).json({ ok:false, error:"unauthorized" });
+}
+
+// productos
+app.get("/api/products", async (_req, res) => {
+  const db = await readDB();
+  res.json({ ok:true, items: db.items });
 });
 
-app.post("/api/products", requireAdmin, (req, res) => {
-  const { name, price = 0, stock = 0, code = "", category = "", image = "" } = req.body || {};
-  if (!name) return res.status(400).json({ ok: false, error: "Nombre requerido" });
+app.post("/api/products", needAdmin, async (req, res) => {
+  const { name, stock, price, code, category, image } = req.body || {};
+  if (!name) return res.status(400).json({ ok:false, error:"name required" });
 
-  const db = readDB();
-  db.items = db.items || [];
+  const db = await readDB();
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2,8);
   db.items.push({
-    id: Date.now().toString(36),
-    name: String(name),
-    price: Number(price) || 0,
-    stock: Number(stock) || 0,
-    code: String(code || ""),
-    category: String(category || ""),
-    image: String(image || "")
+    id,
+    name: String(name).trim(),
+    stock: Number(stock||0),
+    price: Number(price||0),
+    code: (code||"").toString().trim(),
+    category: (category||"").toString().trim(),
+    image: (image||"").toString().trim()
   });
-  writeDB(db);
-  res.json({ ok: true });
+  await writeDB(db);
+  res.json({ ok:true, id });
 });
 
-// --- subida de imágenes ---
+// subida de imágenes
 const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, UP_DIR),
-  filename: (_, file, cb) => {
-    const ext = path.extname(file.originalname || ".png");
-    cb(null, Date.now().toString(36) + ext.toLowerCase());
+  destination: (_req, _file, cb) => cb(null, UP),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname || ".png").toLowerCase() || ".png";
+    const name = "img_" + Date.now() + "_" + Math.random().toString(36).slice(2,7) + ext;
+    cb(null, name);
   }
 });
 const upload = multer({ storage });
 
-app.post("/api/upload", requireAdmin, upload.single("image"), (req, res) => {
-  if (!req.file) return res.status(400).json({ ok: false, error: "Archivo faltante" });
-  // URL pública que el frontend puede usar
-  return res.json({ ok: true, url: `/uploads/${req.file.filename}` });
+app.post("/api/upload", needAdmin, upload.single("image"), (req, res) => {
+  if (!req.file) return res.status(400).json({ ok:false, error:"no file" });
+  const url = "/uploads/" + req.file.filename;
+  res.json({ ok:true, url });
 });
 
-// --- rutas de conveniencia ---
-app.get("/stock.html", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "stock.html")));
-app.get("/", (_, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
+// fallback (SPA simple)
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(PUB, "index.html"));
+});
 
-// --- arranque ---
 app.listen(PORT, () => {
-  console.log(`La Fina corriendo en http://localhost:${PORT}`);
+  console.log("La Fina online en puerto", PORT);
 });
