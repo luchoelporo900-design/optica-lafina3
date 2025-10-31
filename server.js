@@ -1,132 +1,144 @@
-// server.js
+// server.js  (ES Module)
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import multer from "multer";
 import cookieParser from "cookie-parser";
-import fs from "fs";
+import fs from "fs-extra";
+import { v4 as uuidv4 } from "uuid";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// ====== Configuración simple de sesión (cookie) ======
-const ADMIN_PASS = process.env.ADMIN_PASS || "lafina123325";
-const COOKIE_NAME = "lafina_admin";
-function isAuthed(req) {
-  return req.cookies?.[COOKIE_NAME] === "1";
-}
-
-// ====== “BD” JSON en disco ======
+// === CONFIG ===
+const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, "data");
-const DATA_FILE = path.join(DATA_DIR, "products.json");
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "[]");
+const UP_DIR = path.join(__dirname, "public", "uploads");
+const DB_FILE = path.join(DATA_DIR, "products.json");
 
-// util
-const readProducts = () => JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-const writeProducts = (arr) =>
-  fs.writeFileSync(DATA_FILE, JSON.stringify(arr, null, 2));
+// Seguridad básica
+const ADMIN_PASS = process.env.ADMIN_PASS || "lafina123325";
+const COOKIE_SECRET = process.env.COOKIE_SECRET || "lafina_cookie_secret";
+const AUTH_COOKIE = "lafina_auth";
 
-// ====== archivos estáticos ======
-app.use(express.static(path.join(__dirname, "public")));
+// === MIDDLEWARES ===
+app.use(express.json({ limit: "5mb" }));
+app.use(cookieParser(COOKIE_SECRET));
 
-// Rutas para index y admin (evita “Cannot GET /index.html”)
-app.get(["/", "/index.html"], (_req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-app.get("/stock.html", (_req, res) => {
-  res.sendFile(path.join(__dirname, "public", "stock.html"));
-});
-
-// ====== API ======
-// Estado sesión
-app.get("/api/me", (req, res) => {
-  res.json({ ok: true, admin: isAuthed(req) });
+// CORS (por si luego abrís desde otro dominio/app)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
 });
 
-// Login
-app.post("/api/auth/admin", (req, res) => {
+// Archivos estáticos
+app.use(express.static(path.join(__dirname, "public"), { extensions: ["html"] }));
+
+// ========= Helpers =========
+await fs.ensureDir(DATA_DIR);
+await fs.ensureDir(UP_DIR);
+if (!(await fs.pathExists(DB_FILE))) await fs.writeJson(DB_FILE, [], { spaces: 2 });
+
+const readDB = async () => (await fs.readJson(DB_FILE));
+const writeDB = async (rows) => fs.writeJson(DB_FILE, rows, { spaces: 2 });
+
+const isAuthed = (req) => req.signedCookies?.[AUTH_COOKIE] === "ok";
+const requireAuth = (req, res, next) => (isAuthed(req) ? next() : res.status(401).json({ error: "unauthorized" }));
+
+// ========= Auth =========
+app.post("/api/auth/admin", async (req, res) => {
   const { password } = req.body || {};
-  if (password === ADMIN_PASS) {
-    res.cookie(COOKIE_NAME, "1", { httpOnly: true, sameSite: "lax" });
-    return res.json({ ok: true });
-  }
-  return res.status(401).json({ ok: false, error: "unauthorized" });
-});
-
-// Logout
-app.post("/api/logout", (req, res) => {
-  res.clearCookie(COOKIE_NAME);
-  res.json({ ok: true });
-});
-
-// Productos
-app.get("/api/products", (_req, res) => {
-  res.json({ ok: true, items: readProducts() });
-});
-
-app.post("/api/products", (req, res) => {
-  if (!isAuthed(req)) return res.status(401).json({ ok: false });
-  const { name, stock, price, code, category, image } = req.body || {};
-  if (!name) return res.status(400).json({ ok: false, error: "name" });
-
-  const list = readProducts();
-  const id = crypto.randomUUID();
-  list.push({
-    id,
-    name,
-    stock: Number(stock) || 0,
-    price: Number(price) || 0,
-    code: (code || "").toString(),
-    category: (category || "Todos").toLowerCase(),
-    image: image || ""
+  if (!password || password !== ADMIN_PASS) return res.status(401).json({ ok: false, error: "bad_password" });
+  // Cookie firmada, httpOnly
+  res.cookie(AUTH_COOKIE, "ok", {
+    httpOnly: true,
+    sameSite: "lax",
+    signed: true,
+    maxAge: 1000 * 60 * 60 * 8, // 8 horas
   });
-  writeProducts(list);
-  res.json({ ok: true, id });
-});
-
-// NUEVO: eliminar
-app.delete("/api/products/:id", (req, res) => {
-  if (!isAuthed(req)) return res.status(401).json({ ok: false });
-  const id = req.params.id;
-  const list = readProducts();
-  const idx = list.findIndex((p) => p.id === id);
-  if (idx === -1) return res.status(404).json({ ok: false });
-  list.splice(idx, 1);
-  writeProducts(list);
   res.json({ ok: true });
 });
 
-// ====== Upload de imágenes (a /public/uploads) ======
-const uploadDir = path.join(__dirname, "public", "uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+app.post("/api/logout", (req, res) => {
+  res.clearCookie(AUTH_COOKIE);
+  res.json({ ok: true });
+});
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname || ".jpg");
-    cb(null, `${Date.now()}${ext}`);
+app.get("/api/me", (req, res) => res.json({ ok: isAuthed(req) }));
+
+// ========= Productos =========
+app.get("/api/products", async (req, res) => {
+  const rows = await readDB();
+  res.json(rows);
+});
+
+app.post("/api/products", requireAuth, async (req, res) => {
+  const { name, stock, price, code, category, image } = req.body || {};
+  if (!name) return res.status(400).json({ error: "name_required" });
+
+  const item = {
+    id: uuidv4(),
+    name: String(name).trim(),
+    stock: Number(stock || 0),
+    price: Number(price || 0),
+    code: code ? String(code).trim() : "",
+    category: (category || "recetado").toLowerCase(),
+    image: image || "",
+    createdAt: Date.now(),
+  };
+  const rows = await readDB();
+  rows.unshift(item);
+  await writeDB(rows);
+  res.json({ ok: true, item });
+});
+
+app.delete("/api/products/:id", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  let rows = await readDB();
+  const found = rows.find((r) => r.id === id);
+  if (!found) return res.status(404).json({ error: "not_found" });
+
+  // Si la imagen está en /uploads, la borramos del disco
+  if (found.image && found.image.startsWith("/uploads/")) {
+    const filePath = path.join(__dirname, "public", found.image);
+    if (await fs.pathExists(filePath)) await fs.remove(filePath);
   }
+
+  rows = rows.filter((r) => r.id !== id);
+  await writeDB(rows);
+  res.json({ ok: true });
+});
+
+// ========= Uploads =========
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UP_DIR),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
+  },
 });
 const upload = multer({ storage });
 
-app.post("/api/upload", (req, res, next) => {
-  if (!isAuthed(req)) return res.status(401).json({ ok: false });
-  next();
-}, upload.single("image"), (req, res) => {
-  if (!req.file) return res.status(400).json({ ok: false });
-  // URL pública
+app.post("/api/upload", requireAuth, upload.single("image"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "no_file" });
+  // ruta pública
   const url = `/uploads/${req.file.filename}`;
   res.json({ ok: true, url });
 });
 
-// ====== Arranque ======
-const PORT = process.env.PORT || 10000;
+// ========= Rutas de conveniencia =========
+// Raíz => index.html (catálogo)
+app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+// Admin
+app.get("/stock.html", (_req, res) => res.sendFile(path.join(__dirname, "public", "stock.html")));
+
+// Start
 app.listen(PORT, () => {
-  console.log("Óptica La Fina corriendo en http://localhost:" + PORT);
+  console.log("Óptica La Fina escuchando en :" + PORT);
 });
