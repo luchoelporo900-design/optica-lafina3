@@ -10,7 +10,7 @@
 // === Config ===
 const API_PRODUCTS = '/api/products';
 const LS_FAVS_KEY = 'lafina:favs';
-const WHATSAPP_PHONE = ''; // opcional: ej. '595971234567' sin +
+const WHATSAPP_PHONE = '595987459717'; // opcional: ej. '595971234567' sin +
 
 // === Estado ===
 let ALL = [];
