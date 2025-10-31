@@ -2,39 +2,68 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Óptica La Fina — Catálogo</title>
-  <link rel="icon" type="image/png" href="logo.png" />
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#0f1113" />
+  <link rel="icon" type="image/png" href="/public/logo.png" />
+  <link rel="stylesheet" href="/public/styles.css" />
+  <style>
+    /* fallback mínimo si no carga styles.css */
+    body{background:#0f1113;color:#e9e9e9;margin:0;font-family:system-ui,Arial,sans-serif}
+  </style>
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">
-    <img src="logo.png" alt="Óptica La Fina" />
-    <span>ÓPTICA LA FINA</span>
-  </div>
-  <nav><a class="admin-link" href="/stock.html">Subir productos (Admin)</a></nav>
-</header>
 
-<main class="container">
+  <!-- Header -->
+  <header class="header">
+    <div class="brand">
+      <img src="/public/logo.png" alt="Óptica La Fina" />
+      <span>ÓPTICA LA FINA</span>
+    </div>
+    <a class="admin" href="/stock.html">Subir productos (Admin)</a>
+  </header>
+
+  <!-- Título -->
   <h1>Catálogo de Lentes</h1>
-  <div class="search"><input id="q" placeholder="Buscar por nombre o código..." /></div>
-  <div id="chips" class="chips"></div>
-  <p id="status" class="status"></p>
-  <section id="grid" class="grid"></section>
-  <footer class="foot">© Óptica La Fina — Santaní PY</footer>
-</main>
 
-<!-- Lightbox -->
-<div id="lightbox" class="lightbox hidden">
-  <img id="lightImg" alt="Vista ampliada" />
-  <button id="closeLb" class="lb-close" aria-label="Cerrar">×</button>
-</div>
+  <!-- Buscador -->
+  <div class="search-wrap">
+    <input id="search" class="search" type="search" placeholder="Buscar por nombre o código..." autocomplete="off" />
+  </div>
 
-<!-- WhatsApp favoritos -->
-<a id="sendWA" class="fab" style="display:none">Enviar por WhatsApp</a>
+  <!-- Filtros -->
+  <nav class="filters" aria-label="Filtros por categoría">
+    <button class="chip active" data-cat="Todos">Todos</button>
+    <button class="chip" data-cat="Hombre">Hombre</button>
+    <button class="chip" data-cat="Mujer">Mujer</button>
+    <button class="chip" data-cat="Niños">Niños</button>
+    <button class="chip" data-cat="Sol">Sol</button>
+    <button class="chip" data-cat="Recetado">Recetado</button>
+    <button class="chip" data-cat="Metal">Metal</button>
+    <button class="chip" data-cat="Acetato">Acetato</button>
+    <button class="chip" data-cat="Titanio">Titanio</button>
+  </nav>
 
-<script src="app.js"></script>
+  <!-- Grilla de productos -->
+  <main class="grid" id="grid" aria-live="polite"></main>
+
+  <!-- Barra de favoritos / WhatsApp -->
+  <div id="favBar" role="region" aria-label="Enviar favoritos por WhatsApp">
+    <span class="txt">Enviar por WhatsApp (<span class="count">0</span>)</span>
+    <button type="button">Enviar</button>
+  </div>
+
+  <!-- Línea dorada inferior -->
+  <div class="footer-line" aria-hidden="true"></div>
+
+  <!-- Modal Zoom (inyectado por JS) -->
+
+  <noscript>
+    <div style="text-align:center;padding:16px;color:#ffd37a">
+      Activa JavaScript para ver el catálogo.
+    </div>
+  </noscript>
+
+  <script src="/public/app.js" defer></script>
 </body>
 </html>
-<div class="header-border"></div>
