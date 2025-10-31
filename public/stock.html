@@ -1,199 +1,208 @@
-<!-- public/stock.html -->
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ÓPTICA LA FINA — ADMIN</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="/logo.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
-    .admin-card{max-width:860px;margin:40px auto;padding:24px;border:1px solid #6b560a;border-radius:14px;background:#111;}
-    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    .row input,.row select{background:#0e0e0e;border:1px solid #444;color:#eee;padding:10px;border-radius:10px}
-    .btn{background:#d4aa2a;border:none;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .topbar{display:flex;justify-content:flex-end;padding:8px 14px}
-    .muted{color:#9aa0a6;font-size:.9rem;margin-top:6px}
-    table{width:100%;border-collapse:collapse;margin-top:20px}
-    th,td{border-bottom:1px solid #333;padding:10px;text-align:left}
-    .danger{background:#8a1f1f}
+    :root{--bg:#0e0e0f;--gold:#d4a017;--gold-bright:#f2c94c;--text:#f3f3f3;--muted:#a8adb3;--card:#141417}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Poppins,sans-serif;background:var(--bg);color:var(--text)}
+    header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:2px solid var(--gold)}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo img{width:30px;height:30px;border-radius:50%}
+    .link{border:1px solid var(--gold);color:var(--gold);padding:6px 12px;border-radius:999px;text-decoration:none;font-weight:600}
+    .link:hover{background:var(--gold);color:#111}
+    h1{color:var(--gold-bright);text-align:center;margin:26px 0 6px}
+    .panel{max-width:980px;margin:0 auto;padding:16px}
+    .card{background:var(--card);border:1px solid #2b2b2d;border-radius:16px;padding:18px;box-shadow:0 6px 14px rgba(0,0,0,.35)}
+    .row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:10px}
+    input,select{padding:10px;border-radius:10px;border:1px solid #333;background:#1a1a1d;color:var(--text);width:100%}
+    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600}
+    .btn.gold{background:var(--gold);color:#111}
+    .btn.out{background:none;border:1px solid var(--gold);color:var(--gold)}
+    .msg{margin-top:10px;color:#6ee7a8}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:18px}
+    .item{background:#151517;border:1px solid #2b2b2d;border-radius:14px;overflow:hidden}
+    .item img{width:100%;height:160px;object-fit:cover}
+    .item .info{padding:10px}
+    .danger{background:#361b1b;border:1px solid #a33;color:#f8bbbb}
+    footer{text-align:center;border-top:2px solid var(--gold);margin-top:24px;padding:12px;color:#bbb}
+    .loginBox{max-width:560px;margin:40px auto}
+    .center{display:flex;gap:8px;justify-content:center;align-items:center}
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="brand"><img src="/logo.png" alt="" class="logo-sm"> <span>ÓPTICA LA FINA — ADMIN</span></div>
-    <div class="topbar">
-      <a href="/" class="btn" style="background:#222;border:1px solid #d4aa2a">Volver al catálogo</a>
+  <header>
+    <div class="logo">
+      <img src="/logo.png" alt="logo" />
+      <b>ÓPTICA LA FINA — ADMIN</b>
     </div>
+    <a href="/" class="link">Volver al catálogo</a>
   </header>
 
-  <main class="container">
-    <section class="admin-card">
-      <h2>Acceso administrador</h2>
-      <div id="loginBox" class="row" style="align-items:center">
-        <input id="adminPass" type="password" placeholder="Contraseña admin" style="flex:1;max-width:420px">
-        <button id="btnLogin" class="btn">Entrar</button>
-        <span id="loginMsg" class="muted"></span>
+  <h1>Acceso administrador</h1>
+
+  <div class="panel">
+    <!-- Login -->
+    <div id="login" class="loginBox card">
+      <div class="center" style="margin-bottom:10px">
+        <input id="adminPass" type="password" placeholder="Contraseña admin" autocomplete="current-password" />
+        <button id="btnLogin" class="btn gold">Entrar</button>
       </div>
+      <small style="color:var(--muted);display:block;text-align:center">Se guarda en una sesión segura.</small>
+      <div id="loginMsg" class="msg" style="display:none"></div>
+    </div>
 
-      <div id="adminArea" style="display:none">
-        <h3 style="margin-top:18px">Agregar producto</h3>
-        <div class="row">
-          <input id="pName" placeholder="Nombre" style="flex:2">
-          <input id="pStock" type="number" min="0" placeholder="Stock" style="width:120px">
-          <input id="pPrice" type="number" min="0" placeholder="Precio" style="width:160px">
-          <input id="pCode" placeholder="Código (opcional)" style="width:180px">
-          <select id="pCategory">
-            <option>Recetado</option><option>Hombre</option><option>Mujer</option>
-            <option>Niños</option><option>Sol</option><option>Metal</option>
-            <option>Acetato</option><option>Titanio</option>
-          </select>
-        </div>
-        <div class="row" style="align-items:center">
-          <input id="pImage" placeholder="URL de imagen (opcional)" style="flex:1">
-          <input id="pickFile" type="file" accept="image/*" style="display:none">
-          <button id="btnPick" class="btn">Subir imagen</button>
-          <button id="btnAdd" class="btn">Agregar</button>
-          <button id="btnLogout" class="btn" style="background:#222;border:1px solid #d4aa2a">Cerrar sesión</button>
-        </div>
-        <div id="upMsg" class="muted"></div>
-
-        <h3 style="margin-top:28px">Lista actual</h3>
-        <div style="overflow:auto">
-          <table id="tbl">
-            <thead>
-              <tr>
-                <th>Imagen</th><th>Nombre</th><th>Código</th><th>Categoría</th>
-                <th>Precio</th><th>Stock</th><th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-          </table>
-        </div>
+    <!-- Panel admin -->
+    <div id="adminPanel" class="card" style="display:none">
+      <div class="row">
+        <input id="pName" placeholder="Nombre" />
+        <input id="pStock" type="number" placeholder="Stock" />
+        <input id="pPrice" type="number" placeholder="Precio" />
+        <input id="pCode" placeholder="Código (opcional)" />
+        <select id="pCategory">
+          <option value="recetado">Recetado</option>
+          <option value="sol">Sol</option>
+          <option value="hombre">Hombre</option>
+          <option value="mujer">Mujer</option>
+          <option value="niños">Niños</option>
+          <option value="metal">Metal</option>
+          <option value="acetato">Acetato</option>
+          <option value="titanio">Titanio</option>
+        </select>
       </div>
-    </section>
-  </main>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+        <input id="pImage" placeholder="URL de imagen (opcional)" style="flex:1" />
+        <input id="pickFile" type="file" accept="image/*" style="display:none" />
+        <button id="btnPick" class="btn out">Subir imagen</button>
+        <button id="btnAdd" class="btn gold">Agregar</button>
+        <button id="btnLogout" class="btn out">Cerrar sesión</button>
+      </div>
+      <small id="uploadMsg" class="msg" style="display:none"></small>
 
-  <footer class="site-footer">© Óptica La Fina — Santaní PY</footer>
+      <div id="list" class="grid"></div>
+    </div>
+  </div>
+
+  <footer>© Óptica La Fina — Santaní PY</footer>
 
   <script>
-    const $ = (s)=>document.querySelector(s);
+    const $ = (sel) => document.querySelector(sel);
 
-    async function showAdmin(logged){
-      $("#loginBox").style.display = logged? "none":"flex";
-      $("#adminArea").style.display = logged? "block":"none";
-      if(logged) loadList();
-    }
-
-    // al cargar, verificar sesión
-    window.addEventListener("DOMContentLoaded", async ()=>{
-      try{
-        const r = await fetch("/api/me",{credentials:"include"});
-        const j = await r.json();
-        showAdmin(j.admin);
-      }catch{ showAdmin(false); }
+    // Estado de sesión al cargar
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const r = await fetch("/api/me", { credentials: "include" });
+        const d = await r.json();
+        showAdmin(!!d.ok);
+      } catch {
+        showAdmin(false);
+      }
+      renderList(); // por si ya hay productos
     });
 
-    // login
-    $("#btnLogin").onclick = async ()=>{
-      $("#loginMsg").textContent = "";
+    function showAdmin(on){
+      $("#login").style.display = on ? "none" : "block";
+      $("#adminPanel").style.display = on ? "block" : "none";
+    }
+
+    // Login
+    $("#btnLogin").onclick = async () => {
+      $("#loginMsg").style.display = "none";
       const pw = $("#adminPass").value.trim();
-      const r = await fetch("/api/auth/admin",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        credentials:"include",
-        body: JSON.stringify({password: pw})
+      const r = await fetch("/api/auth/admin", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        credentials: "include",
+        body: JSON.stringify({ password: pw })
       });
-      if(r.ok){ showAdmin(true); }
-      else { $("#loginMsg").textContent = "Contraseña incorrecta"; }
-    };
-
-    // logout
-    $("#btnLogout").onclick = async ()=>{
-      await fetch("/api/logout",{method:"POST",credentials:"include"});
-      location.reload();
-    };
-
-    // subir imagen
-    $("#btnPick").onclick = ()=> $("#pickFile").click();
-    $("#pickFile").onchange = async (e)=>{
-      const f = e.target.files[0];
-      if(!f) return;
-      const fd = new FormData();
-      fd.append("image", f);
-      $("#upMsg").textContent = "Subiendo...";
-      const r = await fetch("/api/upload",{method:"POST",credentials:"include",body:fd});
-      const j = await r.json();
-      if(r.ok && j.url){
-        $("#pImage").value = j.url;
-        $("#upMsg").textContent = "Imagen subida ✓";
-      }else{
-        $("#upMsg").textContent = "No se pudo subir";
+      if (!r.ok) {
+        $("#loginMsg").textContent = "Contraseña incorrecta.";
+        $("#loginMsg").style.display = "block";
+        return;
       }
+      showAdmin(true);
     };
 
-    // agregar
-    $("#btnAdd").onclick = async ()=>{
+    // Logout
+    $("#btnLogout").onclick = async () => {
+      await fetch("/api/logout", { method: "POST", credentials: "include" });
+      showAdmin(false);
+    };
+
+    // Subir imagen
+    $("#btnPick").onclick = () => $("#pickFile").click();
+    $("#pickFile").onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append("image", file);
+      const up = await fetch("/api/upload", { method:"POST", body: fd, credentials:"include" });
+      const data = await up.json();
+      if (!up.ok || !data.ok) { alert("No se pudo subir"); return; }
+      $("#pImage").value = data.url;
+      $("#uploadMsg").textContent = "Imagen subida ✓";
+      $("#uploadMsg").style.display = "block";
+      setTimeout(() => ($("#uploadMsg").style.display = "none"), 2000);
+    };
+
+    // Agregar producto
+    $("#btnAdd").onclick = async () => {
       const payload = {
         name: $("#pName").value.trim(),
-        stock: $("#pStock").value,
-        price: $("#pPrice").value,
+        stock: Number($("#pStock").value||0),
+        price: Number($("#pPrice").value||0),
         code: $("#pCode").value.trim(),
         category: $("#pCategory").value,
         image: $("#pImage").value.trim()
       };
-      if(!payload.name){ alert("Nombre requerido"); return; }
-      const r = await fetch("/api/products",{
+      if (!payload.name) return alert("Nombre requerido");
+      const r = await fetch("/api/products", {
         method:"POST",
-        headers:{"Content-Type":"application/json"},
         credentials:"include",
+        headers:{"Content-Type":"application/json"},
         body: JSON.stringify(payload)
       });
-      const j = await r.json();
-      if(r.ok){ limpiar(); loadList(); }
-      else alert("No se pudo agregar");
+      const d = await r.json();
+      if (!r.ok) return alert("No se pudo agregar");
+      clearForm();
+      renderList();
     };
 
-    function limpiar(){
+    function clearForm(){
       ["#pName","#pStock","#pPrice","#pCode","#pImage"].forEach(s=>$(s).value="");
-      $("#pCategory").value = "Recetado";
-      $("#upMsg").textContent = "";
+      $("#pCategory").value = "recetado";
     }
 
-    async function loadList(){
-      const r = await fetch("/api/products",{credentials:"include"});
-      const {items=[]} = await r.json();
-      const tb = $("#rows");
-      tb.innerHTML = "";
-      for(const p of items){
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${p.image? `<img src="${p.image}" style="width:52px;height:52px;object-fit:cover;border-radius:8px">`:"—"}</td>
-          <td>${escapeHtml(p.name||"")}</td>
-          <td>${escapeHtml(p.code||"")}</td>
-          <td>${cap(p.category||"")}</td>
-          <td>Gs ${Number(p.price||0).toLocaleString("es-PY")}</td>
-          <td>${p.stock||0}</td>
-          <td><button class="btn danger" data-id="${p.id}">Eliminar</button></td>`;
-        tb.appendChild(tr);
-      }
-      // bind eliminar
-      tb.querySelectorAll("button[data-id]").forEach(btn=>{
-        btn.onclick = async ()=>{
-          if(!confirm("¿Eliminar este producto?")) return;
-          const id = btn.dataset.id;
-          const r = await fetch(`/api/products/${id}`,{
-            method:"DELETE",
-            credentials:"include"
-          });
-          if(r.ok) loadList();
-          else alert("No se pudo eliminar");
-        };
-      });
+    // Listado con eliminar
+    async function renderList(){
+      const box = $("#list");
+      const r = await fetch("/api/products");
+      const rows = await r.json();
+      box.innerHTML = rows.map(p => `
+        <div class="item">
+          <img src="${p.image||"/logo.png"}" onerror="this.src='/logo.png'"/>
+          <div class="info">
+            <b>${p.name}</b><br>
+            <small>Gs ${Number(p.price||0).toLocaleString()} · Stock: ${p.stock||0}</small><br>
+            <small>Código: ${p.code||"-"} · ${p.category||"-"}</small>
+            <div style="margin-top:8px">
+              <button class="btn danger" onclick="delProd('${p.id}')">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
     }
 
-    function cap(s){ return (s||"").charAt(0).toUpperCase()+ (s||"").slice(1); }
-    function escapeHtml(x){ return (x||"").replace(/[&<>"]/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
+    window.delProd = async (id) => {
+      if (!confirm("¿Eliminar este producto?")) return;
+      const r = await fetch(`/api/products/${id}`, { method:"DELETE", credentials:"include" });
+      if (!r.ok) return alert("No se pudo eliminar");
+      renderList();
+    };
   </script>
 </body>
 </html>
