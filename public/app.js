@@ -1,8 +1,5 @@
-// public/app.js
-
-// Teléfono de WhatsApp (opcional). Si lo tenés, ponelo así: "5959XXXXXXXX".
-// Si lo dejás vacío, abrirá WhatsApp con el mensaje pero sin número.
-const WHATSAPP_PHONE = ""; 
+// Teléfono para WhatsApp (opcional). Formato internacional sin +, ej: "5959XXXXXXXX"
+const WHATSAPP_PHONE = "595987459717";
 
 const ORDERED_CATS = ["Todos","Hombre","Mujer","Niños","Sol","Recetado","Metal","Acetato","Titanio"];
 
@@ -16,10 +13,8 @@ const chipsEl = $("#chips");
 const qEl = $("#q");
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Pintar chips desde el inicio (aunque no haya productos aún)
   buildChips(ORDERED_CATS);
   await loadProducts();
-  // Si hay productos, reconstruyo chips con las categorías presentes (manteniendo orden)
   const present = new Set(PRODUCTS.map(p => (p.category||"").trim()));
   const cats = ["Todos", ...ORDERED_CATS.filter(c=>c!=="Todos" && present.has(c))];
   buildChips(cats.length>1 ? cats : ORDERED_CATS);
@@ -30,7 +25,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadProducts(){
   statusEl.textContent = "Cargando productos…";
   grid.style.display = "none";
-  PRODUCTS = [];
   try{
     const r = await fetch("/api/products");
     const data = await r.json();
@@ -94,7 +88,6 @@ function render(){
     const code = p.code ? ` (${p.code})` : "";
     const img = p.image ? `<img src="${p.image}" alt="${p.name}">` : `<div style="height:180px;display:grid;place-items:center;background:#0d0d0d" class="muted">Sin imagen</div>`;
 
-    // Mensaje de WhatsApp
     const msg = encodeURIComponent(`Hola, quiero este producto:\n${p.name||"Producto"}${code}\nPrecio: Gs ${price}`);
     const waHref = WHATSAPP_PHONE
       ? `https://wa.me/${WHATSAPP_PHONE}?text=${msg}`
