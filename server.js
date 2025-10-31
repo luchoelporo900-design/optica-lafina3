@@ -94,6 +94,27 @@ app.post("/api/products", needAdmin, async (req, res) => {
   res.json({ ok:true, id });
 });
 
+// >>> NUEVO: eliminar producto (y su imagen local si corresponde)
+app.delete("/api/products/:id", needAdmin, async (req, res) => {
+  const { id } = req.params;
+  const db = await readDB();
+  const idx = db.items.findIndex(x => x.id === id);
+  if (idx === -1) return res.status(404).json({ ok:false, error:"not found" });
+
+  const item = db.items[idx];
+  db.items.splice(idx, 1);
+  await writeDB(db);
+
+  // si la imagen está en /uploads, la borramos del disco
+  try {
+    if (item.image && item.image.startsWith("/uploads/")) {
+      const p = path.join(PUB, item.image.replace(/^\/+/, ""));
+      await fsp.unlink(p).catch(()=>{});
+    }
+  } catch {}
+  res.json({ ok:true });
+});
+
 // subida de imágenes
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UP),
