@@ -1,133 +1,232 @@
-// ====== CONFIG ======
-const WHATSAPP_PHONE = ""; // ej "5959XXXXXXXX" (sin +) o dejar vacío para elegir contacto
-const ORDERED_CATS = ["Todos","Hombre","Mujer","Niños","Sol","Recetado","Metal","Acetato","Titanio"];
+/* ÓPTICA LA FINA – APP JS COMPLETO
+   - Carga productos desde /api/products
+   - Render tarjeta con imagen segura (uploads o URL absoluta)
+   - Favoritos (localStorage)
+   - WhatsApp múltiple
+   - Zoom de imagen (modal)
+   - Filtros básicos y búsqueda
+*/
 
-// ====== STATE ======
-let PRODUCTS = [];
-let FAVS = new Set(JSON.parse(localStorage.getItem("lafina:favs")||"[]"));
-let state = { q:"", cat:"Todos" };
+// === Config ===
+const API_PRODUCTS = '/api/products';
+const LS_FAVS_KEY = 'lafina:favs';
+const WHATSAPP_PHONE = ''; // opcional: ej. '595971234567' sin +
 
-// ====== DOM ======
-const $  = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
-const grid = $("#grid"), statusEl = $("#status"), chipsEl = $("#chips"), qEl = $("#q");
-const fab = $("#sendWA");
-const lightbox = $("#lightbox"), lightImg = $("#lightImg"), closeLb = $("#closeLb");
+// === Estado ===
+let ALL = [];
+let VIEW = [];
+let FAVS = new Set(JSON.parse(localStorage.getItem(LS_FAVS_KEY) || '[]'));
 
-function formatGs(n){ return Number(n||0).toLocaleString("es-PY"); }
-function siteUrl(){ return location.origin; }
-function saveFavs(){ localStorage.setItem("lafina:favs", JSON.stringify([...FAVS])); updateFab(); }
-function updateFab(){ const n=FAVS.size; fab.textContent = n?`Enviar por WhatsApp (${n})`:"Enviar por WhatsApp"; fab.style.display = n? "inline-flex":"none"; }
+// === Helpers ===
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-document.addEventListener("DOMContentLoaded", async ()=>{
-  await loadProducts();
-  buildChips();
-  bindEvents();
-  render();
-  updateFab();
-});
-
-async function loadProducts(){
-  statusEl.textContent = "Cargando productos…";
-  grid.style.display = "none";
-  try{
-    const r = await fetch("/api/products");
-    const data = await r.json();
-    PRODUCTS = Array.isArray(data.items) ? data.items : [];
-  }catch(e){
-    statusEl.textContent = "Error de red";
-    return;
-  }
-  if(PRODUCTS.length===0){
-    statusEl.innerHTML = "Aún no hay productos. <a class='admin-link' href='/stock.html'>Agregar ahora</a>";
-    return;
-  }
-  statusEl.textContent = "";
-  grid.style.display = "grid";
+function toPY(n) {
+  const num = Number(n || 0);
+  return `Gs ${num.toLocaleString('es-PY')}`;
 }
 
-function presentCats(){
-  const s = new Set(PRODUCTS.map(p => (p.category||"").trim()).filter(Boolean));
-  return ["Todos", ...ORDERED_CATS.filter(c => c!=="Todos" && s.has(c))];
-}
-function buildChips(){
-  const cats = presentCats();
-  chipsEl.innerHTML = cats.map(c => `<button class="chip ${c===state.cat?"active":""}" data-cat="${c}">${c}</button>`).join("");
-}
-
-function bindEvents(){
-  chipsEl.addEventListener("click", e=>{
-    const b=e.target.closest(".chip"); if(!b) return;
-    state.cat = b.dataset.cat; $$(".chip").forEach(x=>x.classList.toggle("active",x===b)); render();
-  });
-  qEl.addEventListener("input", ()=>{ state.q = qEl.value.toLowerCase(); render(); });
-
-  grid.addEventListener("click", e=>{
-    const fav = e.target.closest("[data-fav]"); if(fav){ toggleFav(fav.dataset.fav); return; }
-    const img = e.target.closest("[data-img]"); if(img){ openLightbox(img.dataset.img); }
-  });
-  closeLb.onclick = closeLightbox;
-  lightbox.addEventListener("click", e=>{ if(e.target===lightbox) closeLightbox(); });
-  fab.onclick = sendWhatsApp;
+function imgSrcFrom(item) {
+  if (!item) return '/public/logo.png';
+  const v = (item.image || item.img || '').toString().trim();
+  if (!v) return '/public/logo.png';
+  // si es URL completa, usar tal cual
+  if (/^https?:\/\//i.test(v)) return v;
+  // si es nombre de archivo subido
+  return `/uploads/${v}`;
 }
 
-function render(){
-  const term = state.q;
-  const cat  = state.cat;
-  const list = PRODUCTS.filter(p=>{
-    const okCat = (cat==="Todos") || ((p.category||"").trim()===cat);
-    const txt = `${p.name||""} ${p.code||""}`.toLowerCase();
-    return okCat && (!term || txt.includes(term));
-  });
+function saveFavs() {
+  localStorage.setItem(LS_FAVS_KEY, JSON.stringify([...FAVS]));
+  updateFavBar();
+}
 
-  if(list.length===0){
-    grid.innerHTML=""; statusEl.textContent = "Sin resultados."; grid.style.display="none"; updateFab(); return;
-  }
-  statusEl.textContent=""; grid.style.display="grid";
+function isFav(id) {
+  return FAVS.has(String(id));
+}
 
-  grid.innerHTML = list.map(p=>{
-    const img = p.image ? `<img data-img="${p.image}" src="${p.image}" alt="${p.name}">` : `<div class="noimg">Sin imagen</div>`;
-    const favActive = FAVS.has(p.id) ? "active" : "";
-    return `
-      <div class="card">
-        <div class="thumb" title="Ver grande">${img}</div>
-        <div class="box">
-          <div class="t1">${p.name||"Producto"}</div>
-          <div>Gs ${formatGs(p.price)}</div>
-          ${p.code? `<div class="muted">Código: ${p.code}</div>`:""}
-          ${p.category? `<div class="muted">Categoría: ${p.category}</div>`:""}
-          <div class="row">
-            <button class="btn fav ${favActive}" data-fav="${p.id}">${FAVS.has(p.id)?"✓ En favoritos":"Favoritos"}</button>
-            <a class="btn wa" href="${singleWA(p)}" target="_blank" rel="noopener">WhatsApp</a>
-          </div>
+// === Render ===
+function cardHTML(item) {
+  const id = item.id ?? item._id ?? item.code ?? crypto.randomUUID();
+  const src = imgSrcFrom(item);
+  const favClass = isFav(id) ? 'is-fav' : '';
+
+  return `
+    <div class="card" data-id="${id}">
+      <div class="thumb-wrap">
+        <img class="thumb" src="${src}" alt="${item.name || 'Producto'}"
+             loading="lazy" onerror="this.src='/public/logo.png'">
+      </div>
+      <div class="card-body">
+        <div class="title">${item.name || 'Producto'}</div>
+        <div class="price">${toPY(item.price)}</div>
+        <div class="meta">Código: ${item.code || '-'}</div>
+        <div class="meta">Categoría: ${item.category || '-'}</div>
+        <div class="actions">
+          <button class="btn btn-wa" data-action="wa">WhatsApp</button>
+          <button class="btn btn-outline ${favClass}" data-action="fav">
+            ${isFav(id) ? 'Quitar' : 'Favoritos'}
+          </button>
         </div>
-      </div>`;
-  }).join("");
+      </div>
+    </div>`;
+}
 
-  $$(".btn.fav").forEach(b=>{
-    const id=b.dataset.fav; b.textContent = FAVS.has(id)?"✓ En favoritos":"Favoritos";
-    b.classList.toggle("active", FAVS.has(id));
+function renderList(list) {
+  const grid = $('.grid') || $('#grid') || document.body;
+  grid.innerHTML = (list && list.length) ? list.map(cardHTML).join('') :
+    `<div class="empty">Sin resultados.</div>`;
+}
+
+function updateFavBar() {
+  const bar = $('#favBar');
+  const count = FAVS.size;
+  if (!bar) return;
+  bar.querySelector('.count').textContent = count;
+  bar.style.display = count ? 'flex' : 'none';
+}
+
+// === Interacción ===
+function attachGridEvents() {
+  const grid = $('.grid') || $('#grid');
+  if (!grid) return;
+
+  grid.addEventListener('click', (e) => {
+    const card = e.target.closest('.card');
+    if (!card) return;
+    const id = card.dataset.id;
+    const item = VIEW.find(x => String(x.id ?? x._id ?? x.code) === String(id))
+      || ALL.find(x => String(x.id ?? x._id ?? x.code) === String(id));
+
+    // Zoom al tocar la foto
+    if (e.target.classList.contains('thumb')) {
+      const src = e.target.getAttribute('src');
+      openModal(src, item?.name || 'Imagen');
+      return;
+    }
+
+    // Botones
+    const action = e.target.dataset.action;
+    if (!action) return;
+
+    if (action === 'wa') {
+      const txt = buildWhatsText([item]);
+      openWhats(txt);
+    }
+
+    if (action === 'fav') {
+      if (isFav(id)) FAVS.delete(String(id));
+      else FAVS.add(String(id));
+      saveFavs();
+      renderList(VIEW);
+    }
   });
-
-  updateFab();
 }
 
-function toggleFav(id){
-  if(FAVS.has(id)) FAVS.delete(id); else FAVS.add(id);
-  saveFavs();
-}
-function openLightbox(src){ lightImg.src = src||""; lightbox.classList.remove("hidden"); }
-function closeLightbox(){ lightImg.src=""; lightbox.classList.add("hidden"); }
+function attachSearchAndFilters() {
+  // Búsqueda
+  const q = $('#search') || $('#q');
+  if (q) {
+    q.addEventListener('input', () => {
+      const t = q.value.toLowerCase().trim();
+      VIEW = ALL.filter(it => {
+        const str = `${it.name} ${it.code} ${it.category}`.toLowerCase();
+        return str.includes(t);
+      });
+      renderList(VIEW);
+    });
+  }
 
-function singleWA(p){
-  const msg = encodeURIComponent(`Hola, quiero este producto:\n${p.name}${p.code? " ("+p.code+")":""}\nPrecio: Gs ${formatGs(p.price)}\n${siteUrl()}`);
-  return WHATSAPP_PHONE ? `https://wa.me/${WHATSAPP_PHONE}?text=${msg}` : `https://wa.me/?text=${msg}`;
+  // Filtros por categoría (botones con data-cat)
+  $$('.chip[data-cat]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cat = btn.dataset.cat;
+      $$('.chip[data-cat]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      VIEW = (cat === 'Todos')
+        ? [...ALL]
+        : ALL.filter(x => (x.category || '').toLowerCase() === cat.toLowerCase());
+      renderList(VIEW);
+    });
+  });
 }
-function sendWhatsApp(){
-  if(FAVS.size===0){ alert("No tienes productos en favoritos."); return; }
-  const list = PRODUCTS.filter(p=>FAVS.has(p.id));
-  const lines = list.map((p,i)=>`${i+1}. ${p.name}${p.code?" ("+p.code+")":""} — Gs ${formatGs(p.price)}`);
-  const msg = encodeURIComponent(`Hola, quiero estos productos:\n${lines.join("\n")}\n\n${siteUrl()}`);
-  const url = WHATSAPP_PHONE ? `https://wa.me/${WHATSAPP_PHONE}?text=${msg}` : `https://wa.me/?text=${msg}`;
-  window.open(url,"_blank");
+
+function attachFavBar() {
+  const bar = $('#favBar');
+  if (!bar) return;
+  bar.querySelector('button').addEventListener('click', () => {
+    const selected = [...FAVS].map(id =>
+      ALL.find(x => String(x.id ?? x._id ?? x.code) === String(id))
+    ).filter(Boolean);
+    const txt = buildWhatsText(selected);
+    openWhats(txt);
+  });
 }
+
+function buildWhatsText(items) {
+  const lines = [
+    'Hola 👋 me interesan estos modelos:',
+    ...items.map((p, i) => {
+      const src = imgSrcFrom(p);
+      return `${i + 1}. ${p.name || 'Producto'} — ${toPY(p.price)}\n   Código: ${p.code || '-'}\n   Img: ${src}`;
+    })
+  ];
+  return encodeURIComponent(lines.join('\n'));
+}
+
+function openWhats(text) {
+  const base = 'https://wa.me';
+  const url = WHATSAPP_PHONE
+    ? `${base}/${WHATSAPP_PHONE}?text=${text}`
+    : `${base}/?text=${text}`;
+  window.open(url, '_blank');
+}
+
+// === Modal para zoom ===
+function openModal(src, title = '') {
+  let modal = $('#imgModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'imgModal';
+    modal.innerHTML = `
+      <div class="modal-backdrop"></div>
+      <div class="modal-body">
+        <img alt="">
+        <button class="modal-close" title="Cerrar">×</button>
+        <div class="modal-title"></div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-backdrop').onclick =
+    modal.querySelector('.modal-close').onclick = () => modal.classList.remove('show');
+  }
+  modal.querySelector('img').src = src;
+  modal.querySelector('.modal-title').textContent = title;
+  modal.classList.add('show');
+}
+
+// === Carga inicial ===
+async function loadProducts() {
+  try {
+    const r = await fetch(API_PRODUCTS, { credentials: 'include' });
+    if (!r.ok) throw new Error('No se pudo cargar');
+    const data = await r.json();
+    ALL = Array.isArray(data) ? data : (data.items || []);
+    // Asegurar id
+    ALL = ALL.map(p => ({ ...p, id: p.id ?? p._id ?? p.code ?? crypto.randomUUID() }));
+    VIEW = [...ALL];
+    renderList(VIEW);
+    updateFavBar();
+  } catch (err) {
+    console.error(err);
+    const grid = $('.grid') || $('#grid');
+    if (grid) grid.innerHTML = `<div class="empty">No se pudieron cargar los productos.</div>`;
+  }
+}
+
+// === Init ===
+document.addEventListener('DOMContentLoaded', () => {
+  attachGridEvents();
+  attachSearchAndFilters();
+  attachFavBar();
+  loadProducts();
+});
