@@ -1,57 +1,143 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Óptica La Fina — Catálogo</title>
-  <link rel="icon" type="image/png" href="/logo.png" />
-  <link rel="stylesheet" href="/styles.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ÓPTICA LA FINA</title>
+<link rel="icon" href="/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e0f;--gold:#d4a017;--gold-bright:#f2c94c;--text:#f3f3f3;--muted:#9aa0a6;--card:#141417;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Poppins,sans-serif;background:var(--bg);color:var(--text);}
+header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;border-bottom:2px solid var(--gold);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo img{width:30px;height:30px;border-radius:50%;}
+h1{color:var(--gold-bright);text-align:center;margin:30px 0 10px;}
+.search{text-align:center;margin-bottom:10px;}
+input{padding:10px;border-radius:10px;border:1px solid #333;background:#1a1a1d;color:var(--text);width:260px;}
+.filters{text-align:center;margin:15px 0;}
+button.filter{background:none;border:1px solid var(--gold);color:var(--text);padding:6px 12px;margin:4px;border-radius:20px;cursor:pointer;}
+button.filter.active{background:var(--gold);color:#000;font-weight:700;}
+.catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;padding:20px;}
+.card{background:var(--card);border:1px solid #2b2b2d;border-radius:16px;overflow:hidden;box-shadow:0 5px 12px rgba(0,0,0,.3);transition:transform .2s;}
+.card:hover{transform:translateY(-4px);}
+.card img{width:100%;height:180px;object-fit:cover;}
+.card .info{padding:12px;}
+.price{color:var(--gold-bright);font-weight:600;}
+.btn{display:inline-block;margin-top:8px;padding:8px 12px;border-radius:10px;text-decoration:none;font-size:14px;}
+.btn.whatsapp{background:var(--gold);color:#111;font-weight:600;}
+.btn.fav{background:none;border:1px solid var(--gold);color:var(--gold);}
+.btn.fav.active{background:var(--gold);color:#111;font-weight:700;}
+.bottom-bar{position:fixed;bottom:0;left:0;width:100%;background:#111;border-top:2px solid var(--gold);padding:10px;text-align:center;}
+footer{text-align:center;border-top:2px solid var(--gold);margin-top:30px;padding:10px;color:#bbb;}
+</style>
 </head>
 <body>
-  <header class="header">
-    <div class="brand">
-      <img src="/logo.png" alt="Óptica La Fina" />
-      <span>ÓPTICA LA FINA</span>
+<header>
+  <div class="logo">
+    <img src="/logo.png" alt="logo">
+    <b>ÓPTICA LA FINA</b>
+  </div>
+  <a href="/stock.html" class="btn fav">Subir productos (Admin)</a>
+</header>
+
+<h1>Catálogo de Lentes</h1>
+<div class="search">
+  <input id="buscar" placeholder="Buscar por nombre o código...">
+</div>
+<div class="filters" id="filtros">
+  <button class="filter active" data-cat="todos">Todos</button>
+  <button class="filter" data-cat="hombre">Hombre</button>
+  <button class="filter" data-cat="mujer">Mujer</button>
+  <button class="filter" data-cat="niños">Niños</button>
+  <button class="filter" data-cat="sol">Sol</button>
+  <button class="filter" data-cat="recetado">Recetado</button>
+  <button class="filter" data-cat="metal">Metal</button>
+  <button class="filter" data-cat="acetato">Acetato</button>
+  <button class="filter" data-cat="titanio">Titanio</button>
+  <button class="filter" data-cat="favoritos">Favoritos</button>
+</div>
+
+<div class="catalog" id="catalogo"></div>
+
+<div class="bottom-bar">
+  <button id="enviarWA" class="btn whatsapp">Enviar por WhatsApp (0)</button>
+</div>
+
+<footer>© Óptica La Fina — Santaní PY</footer>
+
+<script>
+const CATALOGO = document.getElementById('catalogo');
+const NUM_WA = '595987459717'; // ✅ tu número
+let productos = [];
+let favoritos = JSON.parse(localStorage.getItem('favoritos')||'[]');
+let filtro='todos';
+
+// Cargar productos
+async function cargar(){
+  const res = await fetch('/api/products');
+  productos = await res.json();
+  render();
+}
+cargar();
+
+// Renderizado
+function render(){
+  const term = document.getElementById('buscar').value.toLowerCase();
+  let lista = productos.filter(p=> 
+    (filtro==='todos'||p.category===filtro||(filtro==='favoritos'&&favoritos.includes(p.id))) &&
+    (p.name.toLowerCase().includes(term)||p.code?.toLowerCase().includes(term))
+  );
+  CATALOGO.innerHTML = lista.map(p=>`
+    <div class="card">
+      <img src="${p.image||'/logo.png'}" onerror="this.src='/logo.png'">
+      <div class="info">
+        <b>${p.name}</b><br>
+        <span class="price">Gs ${Number(p.price||0).toLocaleString()}</span><br>
+        <small>Código: ${p.code||'-'}</small><br>
+        <small>Categoría: ${p.category||'-'}</small><br>
+        <a href="https://wa.me/${NUM_WA}?text=Hola!%20Estoy%20interesado%20en%20${encodeURIComponent(p.name)}%20(${p.code||'-'})" target="_blank" class="btn whatsapp">WhatsApp</a>
+        <button class="btn fav ${favoritos.includes(p.id)?'active':''}" onclick="toggleFav('${p.id}')">Favoritos</button>
+      </div>
     </div>
-    <a class="admin" href="/stock.html">Subir productos (Admin)</a>
-  </header>
+  `).join('') || "<p style='text-align:center;color:#777'>No se encontraron productos.</p>";
+  actualizarBotonWA();
+}
 
-  <h1>Catálogo de Lentes</h1>
+// Buscar
+document.getElementById('buscar').oninput=()=>render();
 
-  <div class="search-wrap">
-    <input id="search" class="search" type="search" placeholder="Buscar por nombre o código..." autocomplete="off" />
-  </div>
+// Filtros
+document.querySelectorAll('#filtros .filter').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('#filtros .filter').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    filtro=b.dataset.cat;
+    render();
+  }
+});
 
-  <nav class="filters" aria-label="Filtros por categoría">
-    <button class="chip active" data-cat="Todos">Todos</button>
-    <button class="chip" data-cat="Hombre">Hombre</button>
-    <button class="chip" data-cat="Mujer">Mujer</button>
-    <button class="chip" data-cat="Niños">Niños</button>
-    <button class="chip" data-cat="Sol">Sol</button>
-    <button class="chip" data-cat="Recetado">Recetado</button>
-    <button class="chip" data-cat="Metal">Metal</button>
-    <button class="chip" data-cat="Acetato">Acetato</button>
-    <button class="chip" data-cat="Titanio">Titanio</button>
-  </nav>
+// Favoritos
+function toggleFav(id){
+  if(favoritos.includes(id)) favoritos=favoritos.filter(f=>f!==id);
+  else favoritos.push(id);
+  localStorage.setItem('favoritos',JSON.stringify(favoritos));
+  render();
+}
 
-  <main class="grid" id="grid" aria-live="polite"></main>
-
-  <div id="favBar">
-    <span class="txt">Enviar por WhatsApp (<span class="count">0</span>)</span>
-    <button id="sendFavs" type="button">Enviar</button>
-  </div>
-
-  <footer class="footer">
-    <div class="footer-line" aria-hidden="true"></div>
-    <small>© Óptica La Fina — Santaní PY</small>
-  </footer>
-
-  <!-- Modal Zoom -->
-  <dialog id="zoomDlg" class="zoom">
-    <img id="zoomImg" alt="Vista ampliada" />
-    <button id="zoomClose" aria-label="Cerrar">×</button>
-  </dialog>
-
-  <script src="/app.js" defer></script>
+// Enviar WhatsApp con favoritos
+function actualizarBotonWA(){
+  document.getElementById('enviarWA').innerText = `Enviar por WhatsApp (${favoritos.length})`;
+}
+document.getElementById('enviarWA').onclick=()=>{
+  if(!favoritos.length){alert('No tienes favoritos seleccionados');return;}
+  const sel = productos.filter(p=>favoritos.includes(p.id));
+  const texto = sel.map(p=>`• ${p.name} - Gs ${p.price} (Cod: ${p.code||'-'})`).join('%0A');
+  window.open(`https://wa.me/${NUM_WA}?text=Hola!%20Estos%20son%20mis%20favoritos:%0A${texto}`,'_blank');
+};
+</script>
 </body>
 </html>
