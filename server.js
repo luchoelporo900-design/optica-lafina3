@@ -1,142 +1,110 @@
-// --- Óptica La Fina – servidor simple y robusto ---
-const express = require("express");
-const session = require("express-session");
-const multer  = require("multer");
-const fs = require("fs");
-const fsp = fs.promises;
-const path = require("path");
+// server.js
+import express from "express";
+import path from "path";
+import multer from "multer";
+import fs from "fs";
+import cookieParser from "cookie-parser";
 
 const app = express();
+app.use(express.json());
+app.use(cookieParser());
+
+const __dirname = path.resolve();
 const PORT = process.env.PORT || 10000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "lafina123325";
 
-const ROOT = __dirname;
-const PUB  = path.join(ROOT, "public");
-const UP   = path.join(PUB, "uploads");
-const DB   = path.join(ROOT, "data.json");
+// ==== RUTAS ESTÁTICAS ====
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// helpers DB
-async function readDB() {
-  try {
-    const raw = await fsp.readFile(DB, "utf8");
-    const j = JSON.parse(raw);
-    j.items ||= [];
-    return j;
-  } catch {
-    return { items: [] };
-  }
+// ==== BASE DE DATOS SIMPLE (JSON LOCAL) ====
+const dbFile = path.join(__dirname, "data.json");
+if (!fs.existsSync(dbFile)) fs.writeFileSync(dbFile, "[]");
+
+function loadData() {
+  return JSON.parse(fs.readFileSync(dbFile, "utf-8"));
 }
-async function writeDB(data) {
-  await fsp.writeFile(DB, JSON.stringify(data, null, 2), "utf8");
+function saveData(data) {
+  fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
 }
 
-// preparar carpetas
-(async () => {
-  try { await fsp.mkdir(UP, { recursive: true }); } catch {}
-  try { await fsp.access(DB); } catch { await writeDB({ items: [] }); }
-})();
-
-app.set("trust proxy", 1);
-app.use(express.json({ limit: "10mb" }));
-app.use(session({
-  secret: process.env.SESSION_SECRET || "lafina-session-secret",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { sameSite: "lax" }
-}));
-
-// estáticos
-app.use(express.static(PUB, { index: "index.html" }));
-
-// auth
-app.post("/api/auth/admin", async (req, res) => {
-  const { password } = req.body || {};
-  if (password === ADMIN_PASSWORD) {
-    req.session.admin = true;
+// ==== AUTENTICACIÓN SIMPLE ====
+const ADMIN_PASS = "lafina123325";
+app.post("/api/auth/admin", (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASS) {
+    res.cookie("session", "admin", { httpOnly: true, sameSite: "strict" });
     return res.json({ ok: true });
   }
-  res.status(401).json({ ok: false, error: "unauthorized" });
+  res.status(401).json({ ok: false });
 });
 app.post("/api/logout", (req, res) => {
-  req.session.destroy(()=> res.json({ ok:true }));
+  res.clearCookie("session");
+  res.json({ ok: true });
 });
 app.get("/api/me", (req, res) => {
-  res.json({ ok: true, admin: !!req.session.admin });
+  res.json({ ok: req.cookies.session === "admin" });
 });
 
-function needAdmin(req, res, next){
-  if (req.session?.admin) return next();
-  return res.status(401).json({ ok:false, error:"unauthorized" });
-}
+// ==== SUBIDA DE IMÁGENES ====
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// productos
-app.get("/api/products", async (_req, res) => {
-  const db = await readDB();
-  res.json({ ok:true, items: db.items });
-});
-
-app.post("/api/products", needAdmin, async (req, res) => {
-  const { name, stock, price, code, category, image } = req.body || {};
-  if (!name) return res.status(400).json({ ok:false, error:"name required" });
-
-  const db = await readDB();
-  const id = Date.now().toString(36) + Math.random().toString(36).slice(2,8);
-  db.items.push({
-    id,
-    name: String(name).trim(),
-    stock: Number(stock||0),
-    price: Number(price||0),
-    code: (code||"").toString().trim(),
-    category: (category||"").toString().trim(),
-    image: (image||"").toString().trim()
-  });
-  await writeDB(db);
-  res.json({ ok:true, id });
-});
-
-// >>> NUEVO: eliminar producto (y su imagen local si corresponde)
-app.delete("/api/products/:id", needAdmin, async (req, res) => {
-  const { id } = req.params;
-  const db = await readDB();
-  const idx = db.items.findIndex(x => x.id === id);
-  if (idx === -1) return res.status(404).json({ ok:false, error:"not found" });
-
-  const item = db.items[idx];
-  db.items.splice(idx, 1);
-  await writeDB(db);
-
-  // si la imagen está en /uploads, la borramos del disco
-  try {
-    if (item.image && item.image.startsWith("/uploads/")) {
-      const p = path.join(PUB, item.image.replace(/^\/+/, ""));
-      await fsp.unlink(p).catch(()=>{});
-    }
-  } catch {}
-  res.json({ ok:true });
-});
-
-// subida de imágenes
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UP),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname || ".png").toLowerCase() || ".png";
-    const name = "img_" + Date.now() + "_" + Math.random().toString(36).slice(2,7) + ext;
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const name = Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
     cb(null, name);
-  }
+  },
 });
 const upload = multer({ storage });
 
-app.post("/api/upload", needAdmin, upload.single("image"), (req, res) => {
-  if (!req.file) return res.status(400).json({ ok:false, error:"no file" });
-  const url = "/uploads/" + req.file.filename;
-  res.json({ ok:true, url });
+app.post("/api/upload", upload.single("image"), (req, res) => {
+  if (!req.cookies.session || req.cookies.session !== "admin") {
+    return res.status(401).json({ ok: false, error: "noAuth" });
+  }
+  if (!req.file)
+    return res.status(400).json({ ok: false, error: "noFile" });
+
+  const filePath = "/uploads/" + req.file.filename;
+  res.json({ ok: true, path: filePath });
 });
 
-// fallback (SPA simple)
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(PUB, "index.html"));
+// ==== CRUD DE PRODUCTOS ====
+app.get("/api/products", (req, res) => {
+  res.json(loadData());
 });
 
+app.post("/api/products", (req, res) => {
+  if (!req.cookies.session || req.cookies.session !== "admin") {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
+  const products = loadData();
+  const newItem = {
+    id: Date.now().toString(36),
+    name: req.body.name,
+    stock: req.body.stock || 0,
+    price: req.body.price || 0,
+    code: req.body.code || "",
+    category: req.body.category || "General",
+    image: req.body.image || "",
+  };
+  products.push(newItem);
+  saveData(products);
+  res.json({ ok: true, product: newItem });
+});
+
+app.delete("/api/products/:id", (req, res) => {
+  if (!req.cookies.session || req.cookies.session !== "admin") {
+    return res.status(401).json({ ok: false });
+  }
+  const products = loadData();
+  const filtered = products.filter(p => p.id !== req.params.id);
+  saveData(filtered);
+  res.json({ ok: true });
+});
+
+// ==== INICIO ====
 app.listen(PORT, () => {
-  console.log("La Fina online en puerto", PORT);
+  console.log("✅ Servidor en puerto", PORT);
 });
