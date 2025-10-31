@@ -4,19 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Óptica La Fina — Catálogo</title>
-
-  <!-- RUTAS CORRECTAS (sin /public) -->
   <link rel="icon" type="image/png" href="/logo.png" />
   <link rel="stylesheet" href="/styles.css" />
-
-  <!-- Fallback mínimo por si el CSS no cargara -->
-  <style>
-    body{background:#0f1113;color:#e9e9e9;margin:0;font-family:system-ui,Arial,sans-serif}
-  </style>
 </head>
 <body>
-
-  <!-- Header -->
   <header class="header">
     <div class="brand">
       <img src="/logo.png" alt="Óptica La Fina" />
@@ -25,15 +16,12 @@
     <a class="admin" href="/stock.html">Subir productos (Admin)</a>
   </header>
 
-  <!-- Título -->
   <h1>Catálogo de Lentes</h1>
 
-  <!-- Buscador -->
   <div class="search-wrap">
     <input id="search" class="search" type="search" placeholder="Buscar por nombre o código..." autocomplete="off" />
   </div>
 
-  <!-- Filtros -->
   <nav class="filters" aria-label="Filtros por categoría">
     <button class="chip active" data-cat="Todos">Todos</button>
     <button class="chip" data-cat="Hombre">Hombre</button>
@@ -46,21 +34,24 @@
     <button class="chip" data-cat="Titanio">Titanio</button>
   </nav>
 
-  <!-- Grilla de productos -->
   <main class="grid" id="grid" aria-live="polite"></main>
 
-  <!-- Barra de favoritos / WhatsApp -->
-  <div id="favBar" role="region" aria-label="Enviar favoritos por WhatsApp">
+  <div id="favBar">
     <span class="txt">Enviar por WhatsApp (<span class="count">0</span>)</span>
-    <button type="button">Enviar</button>
+    <button id="sendFavs" type="button">Enviar</button>
   </div>
 
-  <!-- Línea dorada inferior -->
-  <div class="footer-line" aria-hidden="true"></div>
+  <footer class="footer">
+    <div class="footer-line" aria-hidden="true"></div>
+    <small>© Óptica La Fina — Santaní PY</small>
+  </footer>
 
-  <!-- Modal Zoom (lo inyecta app.js) -->
+  <!-- Modal Zoom -->
+  <dialog id="zoomDlg" class="zoom">
+    <img id="zoomImg" alt="Vista ampliada" />
+    <button id="zoomClose" aria-label="Cerrar">×</button>
+  </dialog>
 
-  <!-- JS con ruta correcta -->
   <script src="/app.js" defer></script>
 </body>
 </html>
