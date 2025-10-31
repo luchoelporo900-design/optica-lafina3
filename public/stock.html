@@ -6,6 +6,13 @@
   <title>Óptica La Fina — ADMIN</title>
   <link rel="icon" type="image/png" href="logo.png"/>
   <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .table{width:100%;margin-top:18px;border-collapse:collapse}
+    .table th,.table td{border-bottom:1px solid #2c2c2c;padding:8px;text-align:left}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #d4af37;border-radius:999px;color:#d4af37}
+    .danger{border-color:#c0392b;color:#c0392b}
+    .thumb-sm{height:38px;border-radius:8px}
+  </style>
 </head>
 <body>
 <header class="topbar">
@@ -50,11 +57,20 @@
       <button id="btnAdd" class="admin-link">Agregar</button>
       <span id="addMsg" class="status"></span>
     </div>
+
+    <h2 style="margin-top:28px">Productos actuales</h2>
+    <table class="table" id="tbl">
+      <thead>
+        <tr><th>Imagen</th><th>Nombre</th><th>Código</th><th>Categoría</th><th>Precio</th><th>Stock</th><th></th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
   </section>
 </main>
 
 <script>
 const $=s=>document.querySelector(s);
+const rows=$("#rows");
 const loginBox=$("#loginBox"), adminBox=$("#adminBox");
 const msg=$("#loginMsg"), addMsg=$("#addMsg");
 const btnLogin=$("#btnLogin"), btnLogout=$("#btnLogout");
@@ -62,7 +78,6 @@ const adminPass=$("#adminPass");
 const pName=$("#pName"), pStock=$("#pStock"), pPrice=$("#pPrice"), pCode=$("#pCode"), pCategory=$("#pCategory");
 const pImage=$("#pImage"), pickFile=$("#pickFile"), btnPick=$("#btnPick"), preview=$("#preview");
 
-// al cargar, recuperar sesión
 window.addEventListener("DOMContentLoaded", async ()=>{
   try{
     const r=await fetch("/api/me"); const d=await r.json();
@@ -73,15 +88,41 @@ window.addEventListener("DOMContentLoaded", async ()=>{
 function showAdmin(on){
   loginBox.style.display = on? "none":"block";
   adminBox.style.display = on? "block":"none";
+  if(on) loadList();
 }
-// login
+async function loadList(){
+  const r = await fetch("/api/products");
+  const d = await r.json();
+  const items = Array.isArray(d.items)? d.items : [];
+  rows.innerHTML = items.map(p=>`
+    <tr>
+      <td>${p.image? `<img class="thumb-sm" src="${p.image}">`:""}</td>
+      <td>${p.name||""}</td>
+      <td>${p.code||""}</td>
+      <td>${p.category||""}</td>
+      <td>Gs ${Number(p.price||0).toLocaleString("es-PY")}</td>
+      <td>${p.stock||0}</td>
+      <td><button class="pill danger" data-del="${p.id}">Eliminar</button></td>
+    </tr>
+  `).join("");
+
+  rows.querySelectorAll("[data-del]").forEach(b=>{
+    b.onclick = async ()=>{
+      const id = b.dataset.del;
+      if(!confirm("¿Eliminar este producto? Se borrará también la foto subida.")) return;
+      const r = await fetch("/api/products/"+id, { method:"DELETE" });
+      if(r.ok){ loadList(); alert("Eliminado ✔"); } else { alert("No se pudo eliminar"); }
+    };
+  });
+}
+
+// login/logout
 btnLogin.onclick = async ()=>{
   msg.textContent="";
   const pw = adminPass.value.trim();
   const r = await fetch("/api/auth/admin",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
   if(r.ok) showAdmin(true); else msg.textContent="Contraseña incorrecta";
 };
-// logout
 btnLogout.onclick = async ()=>{ await fetch("/api/logout",{method:"POST"}); showAdmin(false); };
 
 // subir imagen
@@ -97,7 +138,7 @@ pickFile.onchange = async (e)=>{
   else alert("No se pudo subir");
 };
 
-// agregar producto
+// agregar
 $("#btnAdd").onclick = async ()=>{
   addMsg.textContent="";
   const payload = {
@@ -111,6 +152,7 @@ $("#btnAdd").onclick = async ()=>{
     ["#pName","#pStock","#pPrice","#pCode","#pImage"].forEach(s=>$(s).value="");
     preview.style.display="none";
     addMsg.textContent = "Producto agregado ✔";
+    loadList();
   }else alert("No se pudo agregar");
 };
 </script>
